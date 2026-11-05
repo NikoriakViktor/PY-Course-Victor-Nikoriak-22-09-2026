@@ -1,0 +1,20 @@
+[
+    {
+        "firstName": "Vanya",
+        "secondName": "Samkov",
+        "telephoneNumber": "0932301253",
+        "address": {
+            "country": "Ukraine",
+            "city": "Kyiv"
+        }
+    },
+    {
+        "firstName": "Dill",
+        "secondName": "Doe",
+        "telephoneNumber": "0500505050",
+        "address": {
+            "country": "USA",
+            "city": "New York"
+        }
+    }
+]
