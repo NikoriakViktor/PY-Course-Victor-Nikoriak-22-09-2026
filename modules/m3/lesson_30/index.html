@@ -16,7 +16,7 @@
         <link rel="prev" href="../pandas/dash_architecture/">
       
       
-        <link rel="next" href="../lesson_31/">
+        <link rel="next" href="../bonus_duckdb/">
       
       
         
@@ -1627,6 +1627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2193,6 +2195,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bonus_duckdb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Бонус. DuckDB і data lake: патерни зберігання та аналізу даних
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -4948,6 +4978,10 @@
 <li>Наступний урок — 31, Redis: база в пам'яті для кешу, черг і лічильників — ті самі структури з уроку 29, але спільні для багатьох програм.</li>
 <li>У модулі 4 до бази під'єднаються веб-застосунки: ORM у Django (урок 34) і SQLAlchemy / SQLModel у FastAPI (урок 39) пишуть SQL за тебе — але читати й перевіряти його доведеться самому.</li>
 </ul>
+<div class="admonition tip">
+<p class="admonition-title">OLTP проти OLAP: бонус «DuckDB і data lake»</p>
+<p>Сьогодні PostgreSQL працював як <strong>OLTP</strong>-база: короткі транзакції над окремими рядками. Аналітика по мільйонах рядків, якій потрібні лише кілька стовпців, краще працює у <strong>стовпцевих</strong> рушіях. Як влаштовані DuckDB, Parquet, data lake і шари medallion — у бонусі <a href="../bonus_duckdb/">«DuckDB і data lake»</a>.</p>
+</div>
 <h2 id="_13">Документація і джерела<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <ul>
 <li>PostgreSQL: <a href="https://www.postgresql.org/docs/current/tutorial.html">Tutorial</a> — розділи «The SQL Language» і «Advanced Features» (зовнішні ключі, транзакції); <a href="https://www.postgresql.org/docs/current/datatype.html">Data Types</a>; <a href="https://www.postgresql.org/docs/current/ddl-constraints.html">Constraints</a>; <a href="https://www.postgresql.org/docs/current/queries.html">Queries</a> (JOIN, GROUP BY, <code>WITH</code>); <a href="https://www.postgresql.org/docs/current/using-explain.html">Using EXPLAIN</a>; <a href="https://www.postgresql.org/docs/current/app-psql.html">psql</a></li>
@@ -5001,13 +5035,13 @@
         
         
           
-          <a href="../lesson_31/" class="md-footer__link md-footer__link--next" aria-label="Вперед: 31. Redis overview">
+          <a href="../bonus_duckdb/" class="md-footer__link md-footer__link--next" aria-label="Вперед: Бонус. DuckDB і data lake: патерни зберігання та аналізу даних">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Вперед
               </span>
               <div class="md-ellipsis">
-                31. Redis overview
+                Бонус. DuckDB і data lake: патерни зберігання та аналізу даних
               </div>
             </div>
             <div class="md-footer__button md-icon">

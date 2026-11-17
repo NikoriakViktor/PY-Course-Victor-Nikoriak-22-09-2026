@@ -1627,6 +1627,8 @@
       
         
       
+        
+      
     
     
     
@@ -1792,6 +1794,34 @@
     
   
     30. Основи SQL (PostgreSQL)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../m3/bonus_duckdb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Бонус. DuckDB і data lake: патерни зберігання та аналізу даних
   
 
     
@@ -3190,6 +3220,7 @@
 <p>Уроки модуля:</p>
 <ul>
 <li><a href="../m3/lesson_30/">Урок 30. Основи SQL (PostgreSQL)</a> — база диспетчерської «Смачно + Таксі»: клієнт і сервер PostgreSQL, встановлення (Docker, інсталятор, Linux, Colab), таблиці з первинними й зовнішніми ключами та обмеженнями, <code>INSERT … RETURNING</code> / <code>UPDATE</code> / <code>DELETE</code>, <code>SELECT</code> і порядок його виконання, <code>NULL</code>, агрегати з <code>GROUP BY</code> / <code>HAVING</code>, <code>JOIN</code> і <code>LEFT JOIN</code>, підзапити й <code>WITH</code>, транзакції й ACID; з Python — <code>psycopg</code>, SQL-ін'єкція й параметри, репозиторій; архітектура: де живуть правила, індекси й <code>EXPLAIN</code>.</li>
+<li><a href="../m3/bonus_duckdb/">Бонус. DuckDB і data lake: патерни зберігання та аналізу даних</a> — поза нумерацією 1–52, після уроку 30: OLTP проти OLAP і рядкове проти стовпцевого зберігання (виміряно на SQLite і DuckDB); DuckDB у Python — запити до DataFrame, параметри <code>?</code>, <code>GROUP BY ALL</code>, <code>SUMMARIZE</code>, <code>PIVOT</code>, <code>EXPLAIN ANALYZE</code>, віконні функції й <code>QUALIFY</code>; CSV, JSON і Parquet, projection і predicate pushdown; data lake, warehouse і lakehouse, Hive-розбиття і проблема дрібних файлів; медальйонна архітектура bronze → silver → gold з карантином, ідемпотентним і інкрементним завантаженням, перевірками якості й pytest; зіркова схема й вітрини, каталог даних; Iceberg, Delta Lake, DuckLake і S3 — концептуально; що де живе: PostgreSQL, Redis, озеро + DuckDB.</li>
 <li><a href="../m3/lesson_31/">Урок 31. Redis overview</a> — Redis поруч із PostgreSQL: що класти в пам'ять, а що на диск; <code>SET</code> / <code>GET</code>, атомарний <code>INCR</code> проти гонитви, <code>EXPIRE</code> / <code>TTL</code>; структури list, hash, set, sorted set (відповідники з уроку 29); <code>redis-py</code> і <code>pipeline</code>; кеш cache-aside, черга задач producer / consumer (<code>BLPOP</code>), Pub/Sub; архітектура: персистентність RDB / AOF, <code>maxmemory-policy allkeys-lru</code>, коли Redis не потрібен; протокол RESP. Практика — rate limit.</li>
 </ul>
 
