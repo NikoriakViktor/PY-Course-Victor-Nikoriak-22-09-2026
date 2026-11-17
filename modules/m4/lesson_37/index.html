@@ -3725,41 +3725,41 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>36</strong></td>
+<td><strong>37</strong></td>
 <td><strong>парсер з типами; <code>NewsItem</code> на Pydantic</strong></td>
 </tr>
 <tr>
-<td>37</td>
+<td>38</td>
 <td>FastAPI: <code>GET /api/news</code>, <code>POST /api/scrape</code>, <code>/docs</code>, Postman</td>
 </tr>
 <tr>
-<td>38</td>
+<td>39</td>
 <td>SQLAlchemy: новини в базі</td>
 </tr>
 <tr>
-<td>39</td>
+<td>40</td>
 <td>middleware, кеш і rate limit на Redis</td>
 </tr>
 <tr>
-<td>41</td>
+<td>42</td>
 <td>тести API</td>
 </tr>
 <tr>
-<td>43</td>
+<td>44</td>
 <td>Gemini: підсумок, категорія, тональність</td>
 </tr>
 <tr>
-<td>47</td>
+<td>48</td>
 <td>Telegram-бот</td>
 </tr>
 <tr>
-<td>48–50</td>
+<td>49–51</td>
 <td>Docker, Compose, CI/CD</td>
 </tr>
 </tbody>
 </table>
 <p>Проєкт: <a href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/tree/main/module_4/lessons/lesson_37_typing_pydantic/news_hub"><code>news_hub</code></a>.</p>
-<p><strong>Що потрібно з попередніх уроків:</strong> функції й словники (М1), класи й <code>@classmethod</code> (уроки 20–24), винятки (13), pytest (25), HTTP і парсинг відповіді (31), серіалізатори DRF (35) — Pydantic робить для FastAPI те саме.</p>
+<p><strong>Що потрібно з попередніх уроків:</strong> функції й словники (М1), класи й <code>@classmethod</code> (уроки 20–24), винятки (14), pytest (26), HTTP і парсинг відповіді (32), серіалізатори DRF (36) — Pydantic робить для FastAPI те саме.</p>
 <p><strong>Після уроку ти зможеш:</strong></p>
 <ul>
 <li>анотувати функції: <code>list[str]</code>, <code>dict[str, int]</code>, <code>X | None</code>, <code>Literal</code>, <code>TypedDict</code>;</li>
@@ -4215,7 +4215,7 @@
 <ul>
 <li><strong>Межа довіри.</strong> Усе, що прийшло ззовні (HTML, файл, тіло запиту), — «сире» (<code>RawNews</code>, лише рядки). Перевірка відбувається <strong>один раз</strong> — у <code>NewsItem</code>. Далі код працює з гарантіями: <code>url</code> — справжній URL з rbc.ua, <code>lang</code> — <code>"uk"</code> або <code>"ru"</code>, <code>published_time</code> — <code>time</code> або <code>None</code>.</li>
 <li><strong>Два інструменти — два моменти.</strong> <code>mypy</code> ловить помилки в <em>коді</em> до запуску; Pydantic — помилки в <em>даних</em> під час роботи. Одне не замінює інше.</li>
-<li><strong>Модель — контракт.</strong> API (37), база (38), Gemini (43) і бот (47) отримуватимуть <code>NewsItem</code>, а не словник: змінимо модель — mypy і тести покажуть усі місця, які це зачепило.</li>
+<li><strong>Модель — контракт.</strong> API (38), база (39), Gemini (44) і бот (48) отримуватимуть <code>NewsItem</code>, а не словник: змінимо модель — mypy і тести покажуть усі місця, які це зачепило.</li>
 </ul>
 <h3 id="mypy">Тести і mypy<a class="headerlink" href="#mypy" title="Permanent link">&para;</a></h3>
 <p>Приклад виводу (час залежить від машини):</p>

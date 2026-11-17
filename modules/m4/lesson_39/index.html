@@ -3847,41 +3847,41 @@
 </thead>
 <tbody>
 <tr>
-<td>36</td>
+<td>37</td>
 <td>парсер з типами; <code>NewsItem</code> на Pydantic</td>
 </tr>
 <tr>
-<td>37</td>
+<td>38</td>
 <td>FastAPI: <code>GET /api/news</code>, <code>POST /api/scrape</code>, <code>/docs</code>, Postman</td>
 </tr>
 <tr>
-<td><strong>38</strong></td>
+<td><strong>39</strong></td>
 <td><strong>SQLAlchemy: новини в базі, унікальний <code>url</code>, повний CRUD, Alembic</strong></td>
 </tr>
 <tr>
-<td>39</td>
+<td>40</td>
 <td>middleware, кеш і rate limit на Redis</td>
 </tr>
 <tr>
-<td>41</td>
+<td>42</td>
 <td>тести API</td>
 </tr>
 <tr>
-<td>43</td>
+<td>44</td>
 <td>Gemini: підсумок, категорія, тональність</td>
 </tr>
 <tr>
-<td>47</td>
+<td>48</td>
 <td>Telegram-бот</td>
 </tr>
 <tr>
-<td>48–50</td>
+<td>49–51</td>
 <td>Docker, Compose, CI/CD</td>
 </tr>
 </tbody>
 </table>
 <p>Проєкт: <a href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/tree/main/module_4/lessons/lesson_39_fastapi_sqlalchemy/news_hub"><code>news_hub</code></a>.</p>
-<p><strong>Що потрібно з попередніх уроків:</strong> SQL — таблиці, <code>UNIQUE</code>, <code>GROUP BY</code>, транзакції, параметри замість f-рядків (урок 30); <code>async</code>/<code>await</code> (27); FastAPI, <code>Depends</code>, <code>lifespan</code>, <code>TestClient</code> (37); <code>NewsItem</code> (36).</p>
+<p><strong>Що потрібно з попередніх уроків:</strong> SQL — таблиці, <code>UNIQUE</code>, <code>GROUP BY</code>, транзакції, параметри замість f-рядків (урок 30); <code>async</code>/<code>await</code> (28); FastAPI, <code>Depends</code>, <code>lifespan</code>, <code>TestClient</code> (38); <code>NewsItem</code> (37).</p>
 <p><strong>Після уроку ти зможеш:</strong></p>
 <ul>
 <li>описати таблицю моделлю SQLAlchemy 2.0 (<code>Mapped</code>, <code>mapped_column</code>) і відрізнити її від Pydantic-моделі;</li>
@@ -4050,7 +4050,7 @@
 <p>Відповідь API — <code>NewsOut(NewsItem)</code> з полями <code>id</code> і <code>scraped_at</code> та <code>from_attributes=True</code>: Pydantic будує її прямо з об'єкта <code>NewsRow</code>.</p>
 <h2 id="refactor-2">Рефакторинг 2. Репозиторій замість <code>NewsStore</code><a class="headerlink" href="#refactor-2" title="Permanent link">&para;</a></h2>
 <p><code>NewsRepository</code> має <strong>ті самі методи</strong>, що <code>NewsStore</code> з уроку 38: <code>add_many</code>, <code>find</code>, <code>count</code>, <code>stats</code>, <code>clear</code>. Тому ендпоінти майже не змінилися:</p>
-<div class="highlight"><span class="filename">news_hub/api.py: було (37) → стало (38)</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gd">-StoreDep = Annotated[NewsStore, Depends(get_store)]</span>
+<div class="highlight"><span class="filename">news_hub/api.py: було (38) → стало (39)</span><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gd">-StoreDep = Annotated[NewsStore, Depends(get_store)]</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gi">+SessionDep = Annotated[AsyncSession, Depends(get_db, scope="function")]</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="gi">+</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="gi">+def get_repo(session: SessionDep) -&gt; NewsRepository:</span>

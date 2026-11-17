@@ -3891,32 +3891,32 @@
 </thead>
 <tbody>
 <tr>
-<td>33</td>
+<td>34</td>
 <td>MVT, ORM, admin</td>
 <td><code>hello_project</code></td>
 </tr>
 <tr>
-<td>34</td>
+<td>35</td>
 <td>форми, Bootstrap, crispy</td>
 <td><code>crispy_notes_project</code></td>
 </tr>
 <tr>
-<td>35</td>
+<td>36</td>
 <td>REST API на DRF</td>
 <td>+ <code>api.py</code></td>
 </tr>
 <tr>
-<td>40</td>
+<td>41</td>
 <td>групи, паролі, JWT, налаштування безпеки</td>
 <td>+ групи, <code>/api/token/</code></td>
 </tr>
 <tr>
-<td><strong>44</strong></td>
+<td><strong>45</strong></td>
 <td><strong>архітектура: CBV, правила доступу в selectors, PostgreSQL; каталог патернів обох проєктів</strong></td>
 <td><strong>+ <code>tests_architecture.py</code>, <code>DATABASE_URL</code></strong></td>
 </tr>
 <tr>
-<td>45</td>
+<td>46</td>
 <td>чат на WebSocket</td>
 <td>—</td>
 </tr>
@@ -3924,7 +3924,7 @@
 </table>
 <p>Проєкт: <a href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/tree/main/module_4/lessons/lesson_45_architecture_patterns/crispy_notes_project"><code>crispy_notes_project</code></a>. Друга половина уроку — патерни агрегатора <a href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/tree/main/module_4/lessons/lesson_44_llm_api/news_hub"><code>news_hub</code></a> з уроку 44; його код не змінюється.</p>
 <p>Це <strong>крок 3 Django-книги</strong> — <a href="https://nikoriakviktor.github.io/notes_chat_app/tutorials/03_crud_and_architecture/">«CRUD і архітектура»</a>: services і selectors, class-based views, PostgreSQL. Теорію кроку тут не переказуємо: лише зміни в коді, їхні причини і те, що знайшли дорогою.</p>
-<p><strong>Що потрібно з попередніх уроків:</strong> <code>services</code> / <code>selectors</code> і тонкий view (33–35); групи і правило «змінює лише автор» (40); класи, успадкування, MRO (уроки 20–21); декоратори (урок 10); <code>Depends</code>, репозиторій і <code>LLMClient</code> у <code>news_hub</code> (37–43).</p>
+<p><strong>Що потрібно з попередніх уроків:</strong> <code>services</code> / <code>selectors</code> і тонкий view (34–36); групи і правило «змінює лише автор» (41); класи, успадкування, MRO (уроки 20–21); декоратори (урок 10); <code>Depends</code>, репозиторій і <code>LLMClient</code> у <code>news_hub</code> (38–44).</p>
 <p><strong>Після уроку ти зможеш:</strong></p>
 <ul>
 <li>пояснити, за що відповідає кожен шар (транспорт → service / selector → ORM) і куди класти новий код;</li>
@@ -3936,7 +3936,7 @@
 <p><strong>Ноутбук заняття:</strong> <a class="md-button md-button--primary" href="https://colab.research.google.com/github/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/blob/main/module_4/lessons/lesson_45_architecture_patterns/note_lesson_45_architecture_student.ipynb">Відкрити вправи в Colab</a> <a class="solutions-link" href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/blob/main/module_4/lessons/lesson_45_architecture_patterns/note_lesson_45_architecture.ipynb">Переглянути розв’язки</a> — selectors без HTTP (M2M і <code>distinct()</code>, лінивий QuerySet), тест архітектури на <code>ast</code>, життєвий цикл і MRO CBV, <code>?next=</code>, кількість SQL-запитів і <code>DATABASE_URL</code>, патерни <code>news_hub</code> (Strategy, Decorator, Factory, DI, репозиторій); 38 розібраних прикладів з повним кодом (визначення й запуск — в окремих клітинках) і 3 задачі з перевірками.</p>
 <h2 id="_1">Пригадай<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Чим <code>selectors.py</code> відрізняється від <code>services.py</code> у проєкті нотаток (урок 34)?</li>
+<li>Чим <code>selectors.py</code> відрізняється від <code>services.py</code> у проєкті нотаток (урок 35)?</li>
 <li>Клас <code>C(A, B)</code>, у <code>A</code> і <code>B</code> є метод <code>run()</code>, обидва викликають <code>super().run()</code>. У якому порядку вони виконаються (урок 21)?</li>
 <li>Як у тестах <code>news_hub</code> підмінили справжню модель Gemini на фейкову, не змінюючи коду ендпоінта (урок 44)?</li>
 </ol>

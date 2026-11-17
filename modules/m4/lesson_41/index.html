@@ -3814,7 +3814,7 @@
 
 
 <h1 id="41-security-basics-jwt-hashing-owasp">Урок 41. Автентифікація та security basics (JWT, hashing, OWASP)<a class="headerlink" href="#41-security-basics-jwt-hashing-owasp" title="Permanent link">&para;</a></h1>
-<p>Django-гілка курсу веде той самий застосунок нотаток з уроку 34: сторінки з формами (34), JSON API на DRF (35). Вхід на сайт і правило «кожен бачить лише свої нотатки» вже є — <code>login_required</code>, <code>user=request.user</code>, чужа нотатка → <code>404</code>. Сьогодні <strong>рефакторинг 4</strong> — безпека:</p>
+<p>Django-гілка курсу веде той самий застосунок нотаток з уроку 34: сторінки з формами (35), JSON API на DRF (36). Вхід на сайт і правило «кожен бачить лише свої нотатки» вже є — <code>login_required</code>, <code>user=request.user</code>, чужа нотатка → <code>404</code>. Сьогодні <strong>рефакторинг 4</strong> — безпека:</p>
 <ul>
 <li><strong>спільний доступ</strong>: нотатка належить групі («Сім'я», «Команда») — і тоді вже не можна просто писати <code>user=request.user</code>;</li>
 <li><strong>паролі</strong>: як Django їх зберігає, зміна й скидання пароля листом;</li>
@@ -3832,39 +3832,39 @@
 </thead>
 <tbody>
 <tr>
-<td>33</td>
+<td>34</td>
 <td>MVT, ORM, admin</td>
 <td><code>hello_project</code></td>
 </tr>
 <tr>
-<td>34</td>
+<td>35</td>
 <td>форми, Bootstrap, crispy</td>
 <td><code>crispy_notes_project</code></td>
 </tr>
 <tr>
-<td>35</td>
+<td>36</td>
 <td>REST API на DRF</td>
 <td>+ <code>api.py</code></td>
 </tr>
 <tr>
-<td><strong>40</strong></td>
+<td><strong>41</strong></td>
 <td><strong>групи, паролі, JWT, налаштування безпеки</strong></td>
 <td><strong>+ групи, <code>/api/token/</code></strong></td>
 </tr>
 <tr>
-<td>44</td>
+<td>45</td>
 <td>архітектура: services і selectors</td>
 <td>—</td>
 </tr>
 <tr>
-<td>45</td>
+<td>46</td>
 <td>чат на WebSocket</td>
 <td>—</td>
 </tr>
 </tbody>
 </table>
 <p>Проєкт: <a href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/tree/main/module_4/lessons/lesson_41_auth_security/crispy_notes_project"><code>crispy_notes_project</code></a>.</p>
-<p><strong>Що потрібно з попередніх уроків:</strong> застосунок нотаток і його <code>services</code>/<code>selectors</code> (33–35), DRF-серіалізатори й <code>ViewSet</code> (35), HTTP-заголовки й статус-коди (31–32), хеш-функції (урок 17).</p>
+<p><strong>Що потрібно з попередніх уроків:</strong> застосунок нотаток і його <code>services</code>/<code>selectors</code> (34–36), DRF-серіалізатори й <code>ViewSet</code> (36), HTTP-заголовки й статус-коди (32–33), хеш-функції (урок 17).</p>
 <p><strong>Після уроку ти зможеш:</strong></p>
 <ul>
 <li>відрізнити автентифікацію («хто ти») від авторизації («що тобі можна») і перевірити обидві на кожному вході в застосунок;</li>
@@ -4338,7 +4338,7 @@
 <tr>
 <td><strong>A01</strong> Broken Access Control</td>
 <td>чужа нотатка; нотатка групи в API</td>
-<td><code>404</code> для чужих (35), <code>_get_own_note</code> → <code>403</code> для учасників (40), групи у формі — лише свої</td>
+<td><code>404</code> для чужих (36), <code>_get_own_note</code> → <code>403</code> для учасників (41), групи у формі — лише свої</td>
 </tr>
 <tr>
 <td><strong>A02</strong> Cryptographic Failures</td>

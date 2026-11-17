@@ -4279,7 +4279,7 @@
     class A,B,C decision
     class D,F success
     class E warning</code></pre>
-<p><strong>Куди далі.</strong> Django-гілка курсу продовжує нотатки: вхід і спільний доступ (урок 41), тести (41), архітектура services/selectors (44), чат на WebSocket (45). FastAPI-гілка з уроку 37 будує <strong>новинний агрегатор</strong> — стартовий парсер новин, який крок за кроком обростає Pydantic-моделями, FastAPI, базою, кешем, підсумками від Gemini і Telegram-ботом.</p>
+<p><strong>Куди далі.</strong> Django-гілка курсу продовжує нотатки: вхід і спільний доступ (урок 41), тести (42), архітектура services/selectors (45), чат на WebSocket (46). FastAPI-гілка з уроку 37 будує <strong>новинний агрегатор</strong> — стартовий парсер новин, який крок за кроком обростає Pydantic-моделями, FastAPI, базою, кешем, підсумками від Gemini і Telegram-ботом.</p>
 <h2 id="practice">Практика<a class="headerlink" href="#practice" title="Permanent link">&para;</a></h2>
 <h3 id="_6">Розібраний приклад: фільтр за записником<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <p>Клієнту потрібні нотатки одного записника: <code>GET /api/notes/?notebook=&lt;id&gt;</code>. Писати новий ORM-запит не треба — <code>selectors.get_user_notes</code> уже вміє фільтр <code>notebook=</code> (ним користується sidebar сторінок). У <code>list</code> лише перевіряємо параметр:</p>

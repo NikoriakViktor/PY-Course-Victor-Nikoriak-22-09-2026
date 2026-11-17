@@ -4111,16 +4111,16 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>51</strong></td>
+<td><strong>52</strong></td>
 <td><strong>зріз курсу, аудит баз і застосунків, рекомендації; вибір і старт фінального проєкту</strong></td>
 </tr>
 <tr>
-<td>52</td>
+<td>53</td>
 <td>випускний: презентація фінального проєкту</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Що потрібно з попередніх уроків:</strong> увесь курс; найбільше — SQL та індекси (29), Redis (30), шари й патерни (44), Compose (49) і CI (50).</p>
+<p><strong>Що потрібно з попередніх уроків:</strong> увесь курс; найбільше — SQL та індекси (30), Redis (31), шари й патерни (45), Compose (50) і CI (51).</p>
 <p><strong>Після уроку ти зможеш:</strong></p>
 <ul>
 <li>пояснити, як пов'язані теми курсу, на прикладі двох готових систем;</li>
@@ -4153,27 +4153,27 @@
     classDef error    fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#1a1a1a;
     classDef warning  fill:#fff8e1,stroke:#e65100,stroke-width:2px,color:#1a1a1a;
 
-    subgraph M1["М1. Python Core · 1–17"]
+    subgraph M1["М1. Python Core · 1–18"]
         direction LR
         A1["типи, умови, цикли,&lt;br&gt;функції, декоратори"] --&gt; A2["генератори, модулі,&lt;br&gt;винятки, файли, Git"] --&gt; A3["CLI-проєкт&lt;br&gt;(урок 18)"]
     end
-    subgraph M2["М2. Python Advanced · 18–28"]
+    subgraph M2["М2. Python Advanced · 19–29"]
         direction LR
         B1["класи, наслідування,&lt;br&gt;dunder, @property"] --&gt; B2["pytest,&lt;br&gt;asyncio"] --&gt; B3["ООП-пакет dispatch&lt;br&gt;(урок 29)"]
     end
-    subgraph M3["М3. Бази даних · 29–30"]
+    subgraph M3["М3. Бази даних · 30–31"]
         direction LR
         C0["бонус: pandas,&lt;br&gt;Dash"] --&gt; C1["SQL,&lt;br&gt;PostgreSQL"] --&gt; C2["Redis"]
     end
-    subgraph M4["М4. Веб · 31–47"]
+    subgraph M4["М4. Веб · 32–48"]
         direction LR
         D1["HTTP, REST,&lt;br&gt;Django, DRF"] --&gt; D2["FastAPI, SQLAlchemy,&lt;br&gt;Redis, тести"] --&gt; D3["LLM, WebSocket,&lt;br&gt;security, Telegram"]
     end
-    subgraph M5["М5. Production · 48–50"]
+    subgraph M5["М5. Production · 49–51"]
         direction LR
         E0["бонус:&lt;br&gt;Linux"] --&gt; E1["Docker"] --&gt; E2["Compose,&lt;br&gt;деплой"] --&gt; E3["CI/CD"]
     end
-    subgraph M6["М6. Капстоун · 51–52"]
+    subgraph M6["М6. Капстоун · 52–53"]
         direction LR
         F1["аудит і план&lt;br&gt;(урок 52)"] --&gt; F2["фінальний проєкт"] --&gt; F3["презентація&lt;br&gt;(урок 53)"]
     end
@@ -4238,61 +4238,61 @@
 </thead>
 <tbody>
 <tr>
-<td>36</td>
+<td>37</td>
 <td><code>NewsItem</code> (Pydantic), парсер rbc.ua</td>
 <td style="text-align: right;">231</td>
 <td style="text-align: right;">9</td>
 </tr>
 <tr>
-<td>37</td>
+<td>38</td>
 <td>FastAPI, скрапер aiohttp</td>
 <td style="text-align: right;">527</td>
 <td style="text-align: right;">17</td>
 </tr>
 <tr>
-<td>38</td>
+<td>39</td>
 <td>SQLAlchemy async, Alembic, CRUD</td>
 <td style="text-align: right;">756</td>
 <td style="text-align: right;">27</td>
 </tr>
 <tr>
-<td>39</td>
+<td>40</td>
 <td>кеш Redis, middleware, rate limit, фонові задачі</td>
 <td style="text-align: right;">1092</td>
 <td style="text-align: right;">36</td>
 </tr>
 <tr>
-<td>41</td>
+<td>42</td>
 <td>тести: unit / integration, фікстури, фейкова мережа</td>
 <td style="text-align: right;">1122</td>
 <td style="text-align: right;">61</td>
 </tr>
 <tr>
-<td>42</td>
+<td>43</td>
 <td>RSS, написаний Claude Code за тестом-специфікацією</td>
 <td style="text-align: right;">1212</td>
 <td style="text-align: right;">72</td>
 </tr>
 <tr>
-<td>43</td>
+<td>44</td>
 <td>LLM: Gemini / Anthropic, circuit breaker</td>
 <td style="text-align: right;">1853</td>
 <td style="text-align: right;">121</td>
 </tr>
 <tr>
-<td>46</td>
+<td>47</td>
 <td>JWT адміна, захист від SSRF, підписані webhooks</td>
 <td style="text-align: right;">2481</td>
 <td style="text-align: right;">159</td>
 </tr>
 <tr>
-<td>47</td>
+<td>48</td>
 <td>бот aiogram, підписки, розсилка</td>
 <td style="text-align: right;">3140</td>
 <td style="text-align: right;">189</td>
 </tr>
 <tr>
-<td>48–50</td>
+<td>49–51</td>
 <td>образ, Compose, CI</td>
 <td style="text-align: right;">3220</td>
 <td style="text-align: right;">202 функції → <strong>351</strong> зібраний тест</td>
@@ -4310,43 +4310,43 @@
 </thead>
 <tbody>
 <tr>
-<td>33</td>
+<td>34</td>
 <td><code>hello_project</code>: модель <code>Note</code>, admin</td>
 <td style="text-align: right;">249</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr>
-<td>34</td>
+<td>35</td>
 <td>форми, crispy, Bootstrap</td>
 <td style="text-align: right;">1863</td>
 <td style="text-align: right;">6</td>
 </tr>
 <tr>
-<td>35</td>
+<td>36</td>
 <td>DRF API над services/selectors</td>
 <td style="text-align: right;">1994</td>
 <td style="text-align: right;">16</td>
 </tr>
 <tr>
-<td>40</td>
+<td>41</td>
 <td>групи, скидання пароля, JWT, throttle</td>
 <td style="text-align: right;">2360</td>
 <td style="text-align: right;">29</td>
 </tr>
 <tr>
-<td>44</td>
+<td>45</td>
 <td>CBV, правила доступу лише в selectors, PostgreSQL</td>
 <td style="text-align: right;">2468</td>
 <td style="text-align: right;">49</td>
 </tr>
 <tr>
-<td>45</td>
+<td>46</td>
 <td>чат: Channels, consumers</td>
 <td style="text-align: right;">2912</td>
 <td style="text-align: right;">59</td>
 </tr>
 <tr>
-<td>49–50</td>
+<td>50–51</td>
 <td>Docker, health, <code>check --deploy</code></td>
 <td style="text-align: right;">3008</td>
 <td style="text-align: right;">64 функції → <strong>81</strong> тест (<code>manage.py test</code>)</td>
@@ -4364,51 +4364,51 @@
 </thead>
 <tbody>
 <tr>
-<td>декоратори (9, 18)</td>
+<td>декоратори (10, 19)</td>
 <td><code>@app.get</code>, <code>@asynccontextmanager</code> (lifespan), <code>@login_required</code>, <code>@pytest.fixture</code></td>
 </tr>
 <tr>
-<td>генератори, <code>yield</code> (10, 24)</td>
+<td>генератори, <code>yield</code> (11, 25)</td>
 <td><code>lifespan</code> FastAPI, <code>get_db</code> (сесія на запит), фікстури з прибиранням</td>
 </tr>
 <tr>
-<td>модулі й пакети (12)</td>
+<td>модулі й пакети (13)</td>
 <td><code>news_hub.bot</code>, <code>hello_app.selectors</code>; <code>python -m news_hub.bot</code></td>
 </tr>
 <tr>
-<td>винятки (13)</td>
+<td>винятки (14)</td>
 <td><code>HTTPException</code>, <code>LLMError</code> → 502/503, повтор при 429 Telegram</td>
 </tr>
 <tr>
-<td>JSON (14)</td>
+<td>JSON (15)</td>
 <td>Pydantic-моделі, <code>model_dump_json</code> у кеші Redis</td>
 </tr>
 <tr>
-<td>Git і PR (15)</td>
+<td>Git і PR (16)</td>
 <td>кожен урок — гілка і PR з CI</td>
 </tr>
 <tr>
-<td>хешування (16)</td>
+<td>хешування (17)</td>
 <td>ключі кешу <code>sha256</code> від параметрів, HMAC webhooks, bcrypt паролів</td>
 </tr>
 <tr>
-<td>класи, композиція (19–23)</td>
+<td>класи, композиція (20–24)</td>
 <td>репозиторії, <code>NewsCache</code>, <code>CircuitBreaker</code>, моделі Django, CBV з mixins</td>
 </tr>
 <tr>
-<td>pytest (25, 41)</td>
+<td>pytest (26, 42)</td>
 <td>351 + 81 тест, маркери, фікстури, двійник Telegram</td>
 </tr>
 <tr>
-<td>asyncio (27)</td>
+<td>asyncio (28)</td>
 <td>скрапер aiohttp, async SQLAlchemy, бот, WebSocket</td>
 </tr>
 <tr>
-<td>SQL, індекси (29)</td>
+<td>SQL, індекси (30)</td>
 <td><code>UNIQUE (url)</code>, складені індекси, <code>INSERT … ON CONFLICT … RETURNING</code></td>
 </tr>
 <tr>
-<td>Redis (30)</td>
+<td>Redis (31)</td>
 <td>кеш, лічильники, статуси задач, channel layer чату</td>
 </tr>
 </tbody>
@@ -5040,7 +5040,7 @@
     class PG,RD success
     class MIG warning
     class CI,GHCR step</code></pre>
-<p>Кожна частина цієї схеми — окремий урок: nginx і репліки (49), міграції одним сервісом (49), образ (48), CI (50). Фінальному проєкту не обов'язково мати їх усі — але мати <code>Dockerfile</code>, <code>docker-compose.yml</code> і CI варто з першого дня: додати їх у кінці завжди важче.</p>
+<p>Кожна частина цієї схеми — окремий урок: nginx і репліки (50), міграції одним сервісом (50), образ (49), CI (51). Фінальному проєкту не обов'язково мати їх усі — але мати <code>Dockerfile</code>, <code>docker-compose.yml</code> і CI варто з першого дня: додати їх у кінці завжди важче.</p>
 <h2 id="final-project">Фінальний проєкт<a class="headerlink" href="#final-project" title="Permanent link">&para;</a></h2>
 <h3 id="_14">Вимоги<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
 <table>

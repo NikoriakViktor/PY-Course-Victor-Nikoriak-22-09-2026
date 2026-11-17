@@ -3841,41 +3841,41 @@
 </thead>
 <tbody>
 <tr>
-<td>36</td>
+<td>37</td>
 <td>парсер з типами; <code>NewsItem</code> на Pydantic</td>
 </tr>
 <tr>
-<td>37</td>
+<td>38</td>
 <td>FastAPI: <code>GET /api/news</code>, <code>POST /api/scrape</code>, <code>/docs</code>, Postman</td>
 </tr>
 <tr>
-<td>38</td>
+<td>39</td>
 <td>SQLAlchemy: новини в базі, повний CRUD, Alembic</td>
 </tr>
 <tr>
-<td>39</td>
+<td>40</td>
 <td>middleware, кеш і rate limit на Redis, фоновий збір</td>
 </tr>
 <tr>
-<td><strong>41</strong></td>
+<td><strong>42</strong></td>
 <td><strong>тести: unit / integration, HTML-фікстури, мок і фейк мережі, httpx, покриття</strong></td>
 </tr>
 <tr>
-<td>43</td>
+<td>44</td>
 <td>Gemini: підсумок, категорія, тональність</td>
 </tr>
 <tr>
-<td>47</td>
+<td>48</td>
 <td>Telegram-бот</td>
 </tr>
 <tr>
-<td>48–50</td>
+<td>49–51</td>
 <td>Docker, Compose, CI/CD</td>
 </tr>
 </tbody>
 </table>
 <p>Проєкт: <a href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/tree/main/module_4/lessons/lesson_42_api_testing/news_hub"><code>news_hub</code></a>.</p>
-<p><strong>Що потрібно з попередніх уроків:</strong> pytest, fixtures, <code>parametrize</code>, mock і правило «patch where used», покриття, піраміда тестів (урок 26); <code>asyncio.gather</code> (27); <code>TestClient</code> і <code>dependency_overrides</code> (37); <code>get_db</code> і COMMIT (38); <code>fakeredis</code> і rate limit (39).</p>
+<p><strong>Що потрібно з попередніх уроків:</strong> pytest, fixtures, <code>parametrize</code>, mock і правило «patch where used», покриття, піраміда тестів (урок 26); <code>asyncio.gather</code> (28); <code>TestClient</code> і <code>dependency_overrides</code> (38); <code>get_db</code> і COMMIT (39); <code>fakeredis</code> і rate limit (40).</p>
 <p><strong>Після уроку ти зможеш:</strong></p>
 <ul>
 <li>розкласти тести на unit та integration і запускати їх окремо;</li>
@@ -3939,7 +3939,7 @@
 <p>Теорію тестування з цих файлів тепер містить частина VIII <a href="https://nikoriakviktor.github.io/notes_chat_app/08_testing_and_quality/">Django-книги</a>. Тут — лише те, що з'являється в проєкті.</p>
 <h2 id="refactor-1">Рефакторинг 1. Шари тестів: unit і integration<a class="headerlink" href="#refactor-1" title="Permanent link">&para;</a></h2>
 <p>Було — три файли поруч: <code>test_models.py</code>, <code>test_api.py</code>, <code>test_redis.py</code>. Щоб перевірити одну функцію парсера, pytest однаково збирав тести, які піднімають застосунок, базу й Redis.</p>
-<div class="highlight"><span class="filename">tests/: було (39) → стало (41)</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tests/                              tests/
+<div class="highlight"><span class="filename">tests/: було (40) → стало (42)</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tests/                              tests/
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── conftest.py                     ├── conftest.py        ← фікстура html(), маркер за папкою
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── test_models.py                  ├── factories.py       ← make_raw(**зміни)
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── test_api.py                     ├── fixtures/          ← збережені сторінки *.html
@@ -4203,7 +4203,7 @@
 <p>На fakeredis «наївний» лічильник дорахував до 10 — гонки не видно. На справжньому Redis — далеко не 10 (у цьому прогоні 2, щоразу по-різному): поки одна корутина чекала відповіді на <code>GET</code>, інші прочитали те саме значення — і записали те саме. Тому <code>test_concurrent_requests_hit_rate_limit_exactly</code> (рефакторинг 5) доводить атомарність rate limit <strong>лише</strong> з <code>TEST_REDIS_URL</code>; з fakeredis він проходить і з «наївним» <code>RateLimiter</code> — ми перевірили, підставивши такий. Про це сказано в docstring тесту.</p>
 <h2 id="refactor-5">Рефакторинг 5. API асинхронно: <code>httpx.AsyncClient</code><a class="headerlink" href="#refactor-5" title="Permanent link">&para;</a></h2>
 <p><code>TestClient</code> синхронний: застосунок крутиться в окремому потоці, запити йдуть по одному, а до Redis чи бази тест дістається через <code>client.portal.call(...)</code>. <code>httpx.AsyncClient</code> з <code>ASGITransport</code> викликає застосунок <strong>напряму</strong>, в тому ж циклі подій, що й тест:</p>
-<div class="highlight"><span class="filename">tests/integration/conftest.py: client (39) → client + aclient (41)</span><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="gd">-@pytest.fixture</span>
+<div class="highlight"><span class="filename">tests/integration/conftest.py: client (40) → client + aclient (42)</span><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="gd">-@pytest.fixture</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="gd">-def client() -&gt; Iterator[TestClient]:</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="gd">-    extra = {"poolclass": StaticPool} if TEST_DATABASE_URL.startswith("sqlite") else {}</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="gd">-    engine = make_engine(TEST_DATABASE_URL, **extra)</span>
@@ -4547,7 +4547,7 @@
 <a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">news_hub.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_rbc_news</span>
 <a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>
 <a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>
-<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">NewsTime39</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>                  <span class="c1"># поле published_time моделі уроків 37–40</span>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">NewsTime40</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>                  <span class="c1"># поле published_time моделі уроків 37–40</span>
 <a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>    <span class="n">published_time</span><span class="p">:</span> <span class="n">time</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>
 <a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a>
@@ -4558,7 +4558,7 @@
 <a id="__codelineno-32-17" name="__codelineno-32-17" href="#__codelineno-32-17"></a>
 <a id="__codelineno-32-18" name="__codelineno-32-18" href="#__codelineno-32-18"></a>
 <a id="__codelineno-32-19" name="__codelineno-32-19" href="#__codelineno-32-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_model_parses_time</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-32-20" name="__codelineno-32-20" href="#__codelineno-32-20"></a>    <span class="k">assert</span> <span class="n">NewsTime39</span><span class="p">(</span><span class="n">published_time</span><span class="o">=</span><span class="s2">"14:19"</span><span class="p">)</span><span class="o">.</span><span class="n">published_time</span> <span class="o">==</span> <span class="n">time</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span>
+<a id="__codelineno-32-20" name="__codelineno-32-20" href="#__codelineno-32-20"></a>    <span class="k">assert</span> <span class="n">NewsTime40</span><span class="p">(</span><span class="n">published_time</span><span class="o">=</span><span class="s2">"14:19"</span><span class="p">)</span><span class="o">.</span><span class="n">published_time</span> <span class="o">==</span> <span class="n">time</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span>
 <a id="__codelineno-32-21" name="__codelineno-32-21" href="#__codelineno-32-21"></a>
 <a id="__codelineno-32-22" name="__codelineno-32-22" href="#__codelineno-32-22"></a>
 <a id="__codelineno-32-23" name="__codelineno-32-23" href="#__codelineno-32-23"></a><span class="n">test_parser_reads_time_attribute</span><span class="p">()</span>
@@ -4568,7 +4568,7 @@
 <a id="__codelineno-32-27" name="__codelineno-32-27" href="#__codelineno-32-27"></a><span class="n">raw</span> <span class="o">=</span> <span class="n">parse_rbc_news</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"tests/fixtures/demo_newsline.html"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
 <a id="__codelineno-32-28" name="__codelineno-32-28" href="#__codelineno-32-28"></a><span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">:</span>
 <a id="__codelineno-32-29" name="__codelineno-32-29" href="#__codelineno-32-29"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-32-30" name="__codelineno-32-30" href="#__codelineno-32-30"></a>        <span class="n">NewsTime39</span><span class="p">(</span><span class="n">published_time</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"datetime"</span><span class="p">])</span>
+<a id="__codelineno-32-30" name="__codelineno-32-30" href="#__codelineno-32-30"></a>        <span class="n">NewsTime40</span><span class="p">(</span><span class="n">published_time</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"datetime"</span><span class="p">])</span>
 <a id="__codelineno-32-31" name="__codelineno-32-31" href="#__codelineno-32-31"></a>    <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
 <a id="__codelineno-32-32" name="__codelineno-32-32" href="#__codelineno-32-32"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">item</span><span class="p">[</span><span class="s1">'datetime'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> → </span><span class="si">{</span><span class="n">error</span><span class="o">.</span><span class="n">errors</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'msg'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
