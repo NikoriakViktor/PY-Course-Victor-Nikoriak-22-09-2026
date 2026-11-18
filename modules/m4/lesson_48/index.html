@@ -3992,7 +3992,7 @@
     class a4,a5 warning
     class a6,b4 success</code></pre>
 <p>Порядок має значення: aiogram перевіряє handler згори донизу і зупиняється на першому, чий фільтр підійшов. <code>F.text</code> («будь-який текст») пропускає й команди, тому він — останній.</p>
-<p>Поглиблено: aiogram — <a href="https://docs.aiogram.dev/en/latest/dispatcher/router.html">Router</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/middlewares.html">Middlewares</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/dependency_injection.html">Dependency injection</a>.</p>
+<p>Поглиблено: aiogram — <a href="https://docs.aiogram.dev/en/latest/dispatcher/router.html">Router</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/middlewares.html">Middlewares</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/dependency_injection.html">Dependency injection</a>; FastAPI-книга — <a href="https://nikoriakviktor.github.io/news_hub/tutorials/09_telegram_bot/bot_structure/">фабрики, роутер, залежності</a>.</p>
 <h2 id="refactor-2">Рефакторинг 2. Відповідь у HTML: екранування і 4096<a class="headerlink" href="#refactor-2" title="Permanent link">&para;</a></h2>
 <p>Бот відповідає з <code>parse_mode=HTML</code>: <code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;a href&gt;</code>. Telegram розбирає розмітку сам і відхиляє повідомлення, у якому «&lt;», «&gt;» чи «&amp;» стоять поза тегом.</p>
 <p>Старий <code>/start</code>:</p>
@@ -4043,7 +4043,7 @@
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
 <a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>    <span class="k">return</span> <span class="n">parts</span>
 </code></pre></div>
-<p>Поглиблено: Bot API — <a href="https://core.telegram.org/bots/api#html-style">Formatting options: HTML style</a>.</p>
+<p>Поглиблено: Bot API — <a href="https://core.telegram.org/bots/api#html-style">Formatting options: HTML style</a>; FastAPI-книга — <a href="https://nikoriakviktor.github.io/news_hub/tutorials/09_telegram_bot/html_replies/">HTML: екранування і 4096</a>.</p>
 <h2 id="refactor-3">Рефакторинг 3. Підписки і сповіщення<a class="headerlink" href="#refactor-3" title="Permanent link">&para;</a></h2>
 <p><code>/subscribe бюджет</code> записує пару «чат + слово» в таблицю <code>subscriptions</code> (міграція <code>0004</code>). <code>chat_id</code> — <code>BigInteger</code>: id груп у Telegram на кшталт <code>-1001234567890</code> не вміщаються в 32 біти. Тест <code>test_group_chat_id_fits</code> з <code>Integer</code> падає на PostgreSQL.</p>
 <p>Збіг — за <strong>початком слова</strong>. Українська змінює закінчення, тож точний збіг пропускав би більшість новин, а пошук підрядка будь-де давав би хибні збіги:</p>
@@ -4156,7 +4156,7 @@
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>• &lt;a href="https://www.rbc.ua/rus/news/zelenskiy-dozvoliv-provedennya-paradu-moskvi-1778265521.html"&gt;Зеленський дозволив проведення параду в Москві 9 травня&lt;/a&gt;
 </code></pre></div>
 <p><code>/scrape</code> у боті — лише для <code>BOT_ADMIN_IDS</code>: бот — ще один вхід у застосунок, і правило «хто може змінювати» з уроку 47 діє й тут.</p>
-<p>Поглиблено: Telegram — <a href="https://core.telegram.org/bots/faq#my-bot-is-hitting-limits-how-do-i-avoid-this">ліміти розсилки</a>; aiogram — <a href="https://docs.aiogram.dev/en/latest/api/exceptions.html">винятки</a>.</p>
+<p>Поглиблено: Telegram — <a href="https://core.telegram.org/bots/faq#my-bot-is-hitting-limits-how-do-i-avoid-this">ліміти розсилки</a>; aiogram — <a href="https://docs.aiogram.dev/en/latest/api/exceptions.html">винятки</a>; FastAPI-книга — <a href="https://nikoriakviktor.github.io/news_hub/tutorials/09_telegram_bot/subscriptions_notify/">підписки і сповіщення</a>.</p>
 <h2 id="refactor-4">Рефакторинг 4. Polling і webhook у FastAPI<a class="headerlink" href="#refactor-4" title="Permanent link">&para;</a></h2>
 <p>Telegram доставляє update одним із двох способів:</p>
 <pre class="mermaid"><code>flowchart TD
@@ -4250,7 +4250,7 @@
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>python -m news_hub.bot → webhook: ''  →  /news 1 → 📰 &lt;b&gt;Останні новини&lt;/b&gt; (1) …   ← polling
 </code></pre></div>
 <p><code>https://</code> у <code>TELEGRAM_WEBHOOK_URL</code> обов'язковий: Telegram не надсилає webhook на http. Виняток — коли задано <code>TELEGRAM_API_URL</code> (двійник або локальний Bot API server).</p>
-<p>Поглиблено: Bot API — <a href="https://core.telegram.org/bots/api#getupdates">getUpdates</a>, <a href="https://core.telegram.org/bots/api#setwebhook">setWebhook</a>, <a href="https://core.telegram.org/bots/webhooks">Marvin's Patent Pending Guide to All Things Webhook</a>; aiogram — <a href="https://docs.aiogram.dev/en/latest/dispatcher/webhook.html">webhook</a>.</p>
+<p>Поглиблено: Bot API — <a href="https://core.telegram.org/bots/api#getupdates">getUpdates</a>, <a href="https://core.telegram.org/bots/api#setwebhook">setWebhook</a>, <a href="https://core.telegram.org/bots/webhooks">Marvin's Patent Pending Guide to All Things Webhook</a>; aiogram — <a href="https://docs.aiogram.dev/en/latest/dispatcher/webhook.html">webhook</a>; FastAPI-книга — <a href="https://nikoriakviktor.github.io/news_hub/tutorials/09_telegram_bot/polling_webhook/">polling і webhook у FastAPI</a>.</p>
 <h2 id="architecture">Архітектура<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph LR
     classDef step     fill:#eceff1,stroke:#546e7a,stroke-width:1px,color:#1a1a1a;
@@ -4525,6 +4525,7 @@
 <h2 id="_10">Документація і джерела<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Код: <a href="https://github.com/NikoriakViktor/PY-Course-Victor-Nikoriak-22-09-2026/tree/main/module_4/lessons/lesson_48_telegram_bot/news_hub"><code>news_hub</code></a> — <code>bot/</code> з <code>ai_bot/app/</code> і <code>echo_bot/</code>, <code>notify.py</code> з <code>production_bot/backend/workers/notifications.py</code>, webhook — з <code>production_bot/backend/api/webhook.py</code>.</li>
+<li><a href="https://nikoriakviktor.github.io/news_hub/">FastAPI-книга</a>, крок 9 Zero to Hero: <a href="https://nikoriakviktor.github.io/news_hub/tutorials/09_telegram_bot/">огляд</a>, <a href="https://nikoriakviktor.github.io/news_hub/tutorials/09_telegram_bot/checkpoint/">контрольна точка</a>; теорія — <a href="https://nikoriakviktor.github.io/news_hub/09_integrations/telegram_bots/">Telegram-бот</a></li>
 <li>Telegram: <a href="https://core.telegram.org/bots/api">Bot API</a>, <a href="https://core.telegram.org/bots/api#html-style">HTML style</a>, <a href="https://core.telegram.org/bots/api#setwebhook">setWebhook</a>, <a href="https://core.telegram.org/bots/webhooks">webhooks</a>, <a href="https://core.telegram.org/bots/faq#my-bot-is-hitting-limits-how-do-i-avoid-this">Bots FAQ: ліміти</a>, <a href="https://github.com/tdlib/telegram-bot-api">локальний Bot API server</a>, <a href="https://core.telegram.org/bots/features#botfather">@BotFather</a>.</li>
 <li>aiogram 3: <a href="https://docs.aiogram.dev/en/latest/">документація</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/router.html">Router</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/middlewares.html">Middlewares</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/dependency_injection.html">Dependency injection</a>, <a href="https://docs.aiogram.dev/en/latest/dispatcher/webhook.html">webhook</a>.</li>
 <li>Уроки курсу: <a href="../lesson_40/">40 — Redis і rate limit</a>, <a href="../lesson_44/">44 — LLM API</a>, <a href="../lesson_47/">47 — Security advanced</a>.</li>
