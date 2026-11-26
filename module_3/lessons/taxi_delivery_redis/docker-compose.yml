@@ -1,0 +1,48 @@
+# 🍕🚕 Taxi Delivery on Redis — навчальний проєкт
+# Запуск:  docker compose up --build
+#   Дашборд  → http://localhost:8060
+#   API docs → http://localhost:8100/docs
+#   Redis    → localhost:6390  (redis-cli -p 6390)
+x-app: &app
+  build: .
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  depends_on:
+    redis:
+      condition: service_healthy
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6390:6379"]       # не 6379, щоб не конфліктувати з іншими Redis на машині
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 10
+
+  api:
+    <<: *app
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8000
+    ports: ["8100:8000"]
+
+  dispatcher:                  # читає Stream, шукає найближчого кур'єра (GEO)
+    <<: *app
+    command: python -m app.dispatcher
+
+  simulator:                   # кур'єри їдуть по мапі
+    <<: *app
+    command: python -m app.simulator
+
+  generator:                   # «клієнти» самі роблять замовлення
+    <<: *app
+    command: python -m app.generator
+
+  dashboard:
+    <<: *app
+    command: python -m app.dashboard
+    ports: ["8060:8050"]
+
+volumes:
+  redis_data:

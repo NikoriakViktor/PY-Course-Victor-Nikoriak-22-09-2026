@@ -245,4 +245,4 @@ module_1/lessons/lesson_16_git_github_system/team_project/solution
 module_1/lessons/lesson_18_module1_review/capstone/solution
 
 # DuckDB bonus: lab folder the notebook builds next to itself
-module_3/bonus/duckdb_data_lake/duckdb_lab/
+module_3/lessons/duckdb_data_lake/duckdb_lab/
