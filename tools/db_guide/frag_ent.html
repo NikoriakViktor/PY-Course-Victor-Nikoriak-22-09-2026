@@ -1,0 +1,43 @@
+<!-- ============ СУТНОСТІ ============ -->
+<section class="lesson" id="ent" data-title="Сутності й картки">
+  <p class="kicker">Спершу проєктуємо — потім код</p>
+  <h2>Сутності «Смачно + Таксі» і де кожна живе</h2>
+  <p class="lead">Перш ніж писати команди, відповідаємо на п'ять питань про кожну сутність, як «картка класу» в ООП. <b>Що це? Де правда (PostgreSQL)? Як вона виглядає в Redis? Хто її змінює й якою командою? Хто її читає?</b> Коли картки заповнені, код майже пишеться сам.</p>
+  <details class="predict"><summary>🔮 Прогноз: замовлення #42 щойно створене, кур'єр ще їде. Чи є рядок з id = 42 у таблиці <code>orders</code> PostgreSQL?</summary><p>Ні. Поки доставка триває, замовлення живе лише в Redis: <code>HASH order:42</code>, запис у <code>STREAM orders:new</code>, місце в <code>ZSET orders:active</code>. У PostgreSQL воно потрапляє одним <code>INSERT</code>, коли його доставлено (<code>simulator.deliver()</code>). Подивись на вкладці «Життя замовлення».</p></details>
+  <div class="card">
+    <h3>Схема: таблиці PostgreSQL (суцільна рамка) і сутності, що живуть лише в Redis (пунктир). Натисни на будь-яку</h3>
+    <div class="er" id="ent-er">
+      <button class="tb" data-e="rest"><h4>restaurants<small>ресторан</small></h4><ul><li class="pk">id</li><li>name, cuisine, district</li><li>lat, lon</li></ul></button>
+      <button class="tb" data-e="menu"><h4>menu_items<small>страва</small></h4><ul><li class="pk">id</li><li class="fk">restaurant_id → restaurants</li><li>name</li><li>price CHECK &gt; 0</li></ul></button>
+      <button class="tb" data-e="cour"><h4>couriers<small>кур'єр</small></h4><ul><li class="pk">id ('c1'…'c8')</li><li>name</li></ul></button>
+      <button class="tb" data-e="order"><h4>orders<small>замовлення</small></h4><ul><li class="pk">id</li><li>customer</li><li class="fk">restaurant_id → restaurants</li><li class="fk">courier_id → couriers</li><li>items JSONB, total, fee</li><li>created_at, delivered_at, lat, lon</li></ul></button>
+      <button class="tb virt" data-e="cust"><h4>клієнт<small>лише Redis</small></h4><ul><li>«client-7» — просто рядок</li><li>ratelimit:&lt;клієнт&gt;</li><li>stats:customers:unique</li></ul></button>
+      <button class="tb virt" data-e="event"><h4>подія<small>лише Redis</small></h4><ul><li>канал events:orders</li><li>стрічка events:log</li></ul></button>
+    </div>
+    <p class="note">Зв'язки: у ресторану багато страв (1 : N), у ресторану багато замовлень (1 : N), кур'єр доставляє багато замовлень (1 : N). <code>FOREIGN KEY</code> не дасть записати замовлення неіснуючого ресторану. У Redis зв'язків немає: їх тримає наш код, через поля на кшталт <code>restaurant_id</code> у <code>HASH order:42</code>.</p>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <h3 id="ent-title">Картка сутності</h3>
+    <dl class="ecard" id="ent-card"></dl>
+  </div>
+  <div class="course" id="ent-course"></div>
+</section>
+
+<!-- ============ ЖИТТЯ ЗАМОВЛЕННЯ ============ -->
+<section class="lesson" id="life" data-title="Життя замовлення">
+  <h2>Життя одного замовлення: де воно лежить на кожному кроці</h2>
+  <p class="lead">Простежимо замовлення <b>#42</b> від кліку клієнта до запису в PostgreSQL. На кожному кроці видно, <b>який сервіс</b> і <b>яка функція</b> працюють, <b>які команди</b> йдуть у Redis і як після них змінюються ключі. Підсвічено те, що змінилося.</p>
+  <details class="predict"><summary>🔮 Прогноз: після доставки кур'єр знову вільний. Яка команда повертає його в «пул» вільних — і що зникне з Redis через годину?</summary><p><code>SADD couriers:free c4</code> у тій самій транзакції <code>MULTI/EXEC</code>, що й статус <code>delivered</code>. Через годину зникне <code>HASH order:42</code>: на нього поставлено <code>EXPIRE 3600</code>. Правда про замовлення вже лежить у PostgreSQL.</p></details>
+  <div class="card">
+    <div class="controls" id="life-controls"></div>
+    <div class="flow" id="life-flow"></div>
+    <div class="where" id="life-where"></div>
+    <pre class="log" id="life-cmd" style="min-height:44px"></pre>
+    <div class="msg" id="life-msg"></div>
+  </div>
+  <div class="grid" style="margin-top:20px">
+    <div class="card"><h3>⚡ Redis — ключі, яких торкається замовлення</h3><div class="ks" id="life-keys"></div></div>
+    <div class="card"><h3>🐘 PostgreSQL</h3><div id="life-pg"></div><p class="note" id="life-pgnote"></p></div>
+  </div>
+  <div class="course" id="life-course"></div>
+</section>

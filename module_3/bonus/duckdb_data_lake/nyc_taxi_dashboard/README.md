@@ -18,11 +18,29 @@ data/year=2019/month=01/*.parquet ─▶ DuckDB (VIEW + SQL) ─▶ Dash (KPI, �
 
 ## Запуск
 
+**1. Відкрий термінал у корені репозиторію курсу.** У PyCharm — вкладка **Terminal** унизу: вона відкривається саме в корені проєкту. Або PowerShell чи cmd і `cd` до папки, куди ти склонував курс.
+
+**2. Перейди в папку дашборду** — туди, де лежить `app.py`:
+
+```bash
+cd module_3/bonus/duckdb_data_lake/nyc_taxi_dashboard
+```
+
+Перевір, що ти на місці: `dir` (Windows) або `ls` (macOS, Linux) має показати `app.py`, `download_data.py` і `taxi_zones`.
+
+**3. Встанови бібліотеки, завантаж дані (лише перший раз) і запусти:**
+
 ```bash
 pip install duckdb geopandas pyogrio plotly dash dash-bootstrap-components
-python download_data.py      # лише якщо data/ порожня
-python app.py                # → http://127.0.0.1:8055
+python download_data.py      # лише якщо папки data/ немає або вона порожня
+python app.py                # → відкрий http://127.0.0.1:8055
 ```
+
+Зупинка — `Ctrl+C` у терміналі.
+
+> **`can't open file 'app.py'`** — ти не в тій папці, повернись до кроку 2.
+>
+> **`No parquet files found`** — даних немає: запусти `python download_data.py` (~3 ГБ, кілька хвилин).
 
 > **Перший запуск ~30 с**: DuckDB один раз згортає ~200 млн поїздок у компактний «куб»
 > (рік × місяць × година × день тижня × зона, ~1,5 млн рядків) і кладе його в `.cache/` (~28 МБ, у `.gitignore`).

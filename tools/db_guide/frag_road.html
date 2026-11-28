@@ -1,0 +1,32 @@
+<!-- ============ РОАДМАП ============ -->
+<section class="lesson" id="road" data-title="Порядок вивчення">
+  <p class="kicker">Як усе це пройти</p>
+  <h2>Роадмап: у якому порядку вивчати бази даних</h2>
+  <p class="lead">Кожен крок спирається на попередній. Під кожним — що ти вмітимеш після нього і де це видно в «Смачно + Таксі». Нижче — план заняття для викладача.</p>
+  <div class="roadmap" id="road-steps"></div>
+  <div class="card" style="margin-top:12px;max-width:900px">
+    <h3>Заняття за цим гайдом (≈ 90 хв)</h3>
+    <div class="tablewrap"><table class="t">
+      <tr><th>Хв</th><th>Вкладка</th><th>Що робимо</th></tr>
+      <tr><td class="num">10</td><td>1 · Карта</td><td>Три бази — три ролі. Тренажер «Куди покласти?» усією групою, вголос.</td></tr>
+      <tr><td class="num">15</td><td>2 · Сутності</td><td>Заповнюємо картку «Замовлення» разом, потім «Життя замовлення» по кроках.</td></tr>
+      <tr><td class="num">15</td><td>3 · Redis зсередини</td><td>Таблиця типів → пісочниця: сценарії «Захоплення кур'єра» і «Черга зі збоєм».</td></tr>
+      <tr><td class="num">25</td><td>4 · Патерни</td><td>Перед кожною анімацією — прогноз (🔮), потім «Крок →». Обов'язково «Три черги».</td></tr>
+      <tr><td class="num">20</td><td>5 · Архітектура</td><td>Запущений проєкт поруч: «Одне замовлення наскрізь» і справжні <code>docker compose logs</code>. Задача 3 («Падіння») наживо.</td></tr>
+      <tr><td class="num">5</td><td>7 · Задачі</td><td>Домашнє: дві задачі на вибір.</td></tr>
+    </table></div>
+  </div>
+  <div class="course" id="road-course"></div>
+</section>
+
+<!-- ============ ЗАДАЧІ ============ -->
+<section class="lesson" id="tasks" data-title="Задачі на проєкті">
+  <h2>Задачі на проєкті: передбач → запусти → досліди → зміни → зроби своє</h2>
+  <p class="lead">Кожна задача — на запущеному <code>taxi_delivery_redis</code>. Спершу <b>передбач</b> результат письмово, потім перевір. Команди виконуй у папці проєкту: <code>module_3/lessons/taxi_delivery_redis</code>. <code>redis-cli -p 6390</code> працює, якщо Redis встановлено локально; інакше — <code>docker compose exec redis redis-cli</code>.</p>
+  <div id="tasks-list"></div>
+  <div class="card" style="margin-top:12px">
+    <h3>Правила для ШІ-помічника</h3>
+    <p style="margin:0;font-size:14.5px">Задачі 1–4 — <b>без ШІ</b>: їхня мета — побачити й пояснити поведінку системи самому. Задачі 5–7 — <b>з ШІ можна</b>, але до здачі додай 3–4 речення: де допоміг ШІ, що ти перевірив у логах чи <code>redis-cli</code> і що виправив. Оцінюється і робочий код, і пояснення.</p>
+  </div>
+  <div class="course" id="tasks-course"></div>
+</section>

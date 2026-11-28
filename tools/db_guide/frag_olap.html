@@ -1,0 +1,34 @@
+<!-- ============ OLAP ============ -->
+<section class="lesson" id="olap" data-title="Від PostgreSQL до DuckDB">
+  <p class="kicker">Після доставки</p>
+  <h2>Історія замовлень: від PostgreSQL до DuckDB</h2>
+  <p class="lead">PostgreSQL накопичує завершені замовлення. Рано чи пізно бізнес питає: <b>«Який виторг кожного ресторану? О котрій годині найбільше замовлень? Скільки в середньому їде кур'єр?»</b> Такі запити читають <b>усю історію</b>, але лише <b>кілька колонок</b>. Для них є колонкові аналітичні рушії на кшталт DuckDB. Подивись, скільки даних прочитає кожен підхід.</p>
+  <details class="predict"><summary>🔮 Прогноз: запит <code>SELECT restaurant_id, SUM(total) FROM orders GROUP BY restaurant_id</code>. Скільки з шести колонок таблиці йому насправді потрібно? Скільки прочитає PostgreSQL?</summary><p>Потрібні дві колонки: <code>restaurant_id</code> і <code>total</code>. PostgreSQL зберігає дані <b>рядками</b>: щоб дістати дві колонки, він читає сторінки з цілими рядками, тобто всі шість. DuckDB і parquet зберігають <b>колонками</b> й читають лише дві. На 200 млн рядків це різниця між хвилинами й секундами.</p></details>
+  <div class="card">
+    <div class="controls" id="olap-controls"></div>
+    <div class="msg" id="olap-msg" style="margin-bottom:12px"></div>
+    <div class="row" style="margin-top:0"><h4>🐘 Рядкове зберігання (PostgreSQL, OLTP) <small>рядок за рядком: зручно вставити чи змінити одне замовлення</small></h4><div class="disk" id="olap-row"></div></div>
+    <div class="row"><h4>🦆 Колонкове зберігання (parquet / DuckDB, OLAP) <small>колонка за колонкою: зручно рахувати по всій історії</small></h4><div class="disk" id="olap-col"></div></div>
+    <div class="stats"><span>Прочитано клітинок, рядкове: <b id="olap-nr">0</b></span><span>колонкове: <b id="olap-nc">0</b></span></div>
+  </div>
+  <div class="grid" style="margin-top:20px">
+    <div class="card">
+      <h3>Конвеєр: PostgreSQL → parquet → DuckDB</h3>
+      <pre class="code" id="olap-code"></pre>
+      <p class="note">Запускай з папки <code>taxi_delivery_redis</code>, коли проєкт попрацював кілька хвилин. Перша команда вивантажує таблицю з контейнера <code>postgres</code> у CSV, тож окремий <code>psql</code> не потрібен.</p>
+    </div>
+    <div class="card">
+      <h3>OLTP проти OLAP</h3>
+      <div class="tablewrap"><table class="t">
+        <tr><th></th><th>PostgreSQL (OLTP)</th><th>DuckDB (OLAP)</th></tr>
+        <tr><td>Типовий запит</td><td>одне замовлення: вставити, знайти, оновити</td><td>суми й середні по всій історії</td></tr>
+        <tr><td>Зберігання</td><td>рядками, сторінки по 8 КБ</td><td>колонками, стиснено</td></tr>
+        <tr><td>Одночасні записи</td><td>тисячі клієнтів, транзакції</td><td>один процес-письменник</td></tr>
+        <tr><td>Де живе</td><td>сервер, мережа, користувачі</td><td>бібліотека у твоєму Python</td></tr>
+        <tr><td>Дані</td><td>«живі», джерело правди</td><td>копія: файли parquet</td></tr>
+      </table></div>
+      <details class="deep"><summary>🔴 Поглиблення: читати PostgreSQL напряму</summary><p>У DuckDB є розширення <code>postgres</code>: <code>ATTACH 'postgresql://taxi:taxi@localhost:5434/smachno' AS pg (TYPE postgres)</code>, а далі <code>SELECT … FROM pg.orders</code>. Зручно для разових запитів. Але важкі аналітичні запити краще ганяти по копії в parquet, щоб не навантажувати джерело правди.</p></details>
+    </div>
+  </div>
+  <div class="course" id="olap-course"></div>
+</section>

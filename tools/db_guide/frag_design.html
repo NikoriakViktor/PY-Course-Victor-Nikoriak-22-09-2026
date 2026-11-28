@@ -1,0 +1,84 @@
+<!-- ============ ЩО ТАКЕ ============ -->
+<section class="lesson" id="whatis" data-title="Що таке PostgreSQL, Redis, data lake">
+  <p class="kicker">Словник перед проєктуванням</p>
+  <h2>Що таке PostgreSQL, Redis, data lake і колонкове зберігання</h2>
+  <p class="lead">Чотири види сховищ відповідають на різні питання. Перш ніж будувати базу, треба знати, <b>як кожне з них зберігає дані</b>, бо звідси випливає, що в ньому робити легко, а що — боляче.</p>
+  <div class="whys">
+    <div class="why"><h3>🐘 Реляційна база (PostgreSQL)</h3><p><b>Як зберігає:</b> таблиці з рядків і колонок на диску. Кожна таблиця має схему: назви й типи колонок, обов'язковість, перевірки. Рядки різних таблиць пов'язані ключами: <code>orders.restaurant_id → restaurants.id</code>.</p><p><b>Мова:</b> SQL — <code>SELECT … JOIN … WHERE … GROUP BY</code>.</p><p><b>Гарантії:</b> транзакції ACID — записалось або все, або нічого, і назавжди.</p><p><b>Для чого:</b> джерело правди, гроші, довідники, будь-які дані зі зв'язками.</p><p style="color:var(--muted)">У проєкті: <code>sql/init.sql</code> (схема), <code>app/db.py</code> (запити).</p></div>
+    <div class="why"><h3>⚡ Сховище ключ → значення в пам'яті (Redis)</h3><p><b>Як зберігає:</b> один великий словник у RAM. Ключ — рядок (<code>order:42</code>), значення — структура: рядок, хеш, список, множина, sorted set, stream, geo.</p><p><b>Мова:</b> команди — <code>HSET</code>, <code>INCR</code>, <code>XADD</code>… Кожна атомарна.</p><p><b>Гарантії:</b> швидкість (мікросекунди) й атомарність. Збереження на диск налаштовується (AOF/RDB), але схеми та зв'язків немає.</p><p><b>Для чого:</b> кеш, лічильники, черги, рейтинги, «хто поруч», стан, який ділять кілька процесів.</p><p style="color:var(--muted)">У проєкті: <code>app/config.py</code> (усі ключі), <code>menu.py</code>, <code>orders.py</code>, <code>dispatcher.py</code>, <code>simulator.py</code>.</p></div>
+    <div class="why"><h3>🗄️ Data lake</h3><p><b>Як зберігає:</b> звичайні файли (parquet, CSV, JSON) у папках або хмарному сховищі, розкладені за датою: <code>data/year=2024/month=05/*.parquet</code>. Сервера бази немає.</p><p><b>Мова:</b> будь-який рушій, що читає файли: DuckDB, Spark, pandas.</p><p><b>Гарантії:</b> дешево зберігати роки історії, її можна читати багатьма інструментами. Окремі рядки не оновлюють: дописують нові файли.</p><p><b>Для чого:</b> архів і аналітика. Шари bronze → silver → gold — від сирого до чистого.</p><p style="color:var(--muted)">У курсі: <code>module_3/bonus/duckdb_data_lake/</code>, 200 млн поїздок NYC Taxi.</p></div>
+    <div class="why"><h3>🦆 Колонкове зберігання й DuckDB</h3><p><b>Як зберігає:</b> parquet і DuckDB кладуть поруч значення <b>однієї колонки</b>, а не одного рядка. Запит «сума <code>total</code> за районами» читає дві колонки зі ста, і вони добре стискаються.</p><p><b>Мова:</b> SQL, майже як у PostgreSQL, але просто по файлах: <code>FROM 'orders.parquet'</code>.</p><p><b>Гарантії:</b> швидкі агрегати по мільйонах рядків. Не для частих дрібних записів.</p><p><b>Для чого:</b> звіти, дашборди, дослідження даних.</p><p style="color:var(--muted)">Вкладка «Аналітика»: анімація рядки проти колонок.</p></div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <h3>Одна дія — три сховища</h3>
+    <div class="tablewrap"><table class="t">
+      <tr><th>Що треба зробити</th><th>PostgreSQL</th><th>Redis</th><th>DuckDB + parquet</th></tr>
+      <tr><td>Знайти замовлення #42</td><td><code>SELECT * FROM orders WHERE id = 42</code></td><td><code>HGETALL order:42</code></td><td>можна, але це не його робота</td></tr>
+      <tr><td>+1 до лічильника з 5 процесів одночасно</td><td><code>UPDATE … SET n = n + 1</code> — блокування рядка, диск</td><td><code>INCR</code> — мікросекунди</td><td>—</td></tr>
+      <tr><td>Наступне замовлення для диспетчера</td><td><code>SELECT … FOR UPDATE SKIP LOCKED</code> — можливо, але складно</td><td><code>XREADGROUP</code></td><td>—</td></tr>
+      <tr><td>Замовлення з назвою ресторану й іменем кур'єра</td><td><code>JOIN</code> — природно</td><td>кілька <code>HGET</code> і склеювання в коді</td><td><code>JOIN</code> по файлах</td></tr>
+      <tr><td>Виторг кожного району за 2 роки</td><td>працює, але навантажує живу базу</td><td>не вміє</td><td><code>GROUP BY</code> — секунди</td></tr>
+    </table></div>
+  </div>
+  <div class="course" id="whatis-course"></div>
+</section>
+
+<!-- ============ 7 КРОКІВ ПРОЄКТУВАННЯ ============ -->
+<section class="lesson" id="design" data-title="Як спроєктувати базу: 7 кроків">
+  <h2>Як спроєктувати базу даних: 7 кроків</h2>
+  <p class="lead">Базу не починають з <code>CREATE TABLE</code>. Починають з <b>питань, на які система має відповідати</b>, і йдуть зверху вниз: сценарії → сутності → поля → зв'язки → таблиці → гарячі операції в Redis → аналітика. Пройди кроки на «Смачно + Таксі». На кожному показано, <b>що ми вирішили</b>, <b>де це в коді</b> і <b>чому саме там</b>.</p>
+  <details class="predict"><summary>🔮 Прогноз: з чого почнеш проєктувати базу для служби доставки — з таблиць чи з питання «що користувачі й сервіси мають робити»?</summary><p>З питань. Таблиці — відповідь на них. Якщо почати з таблиць, з'являться колонки, які ніхто не читає, і не буде тих, без яких система не працює, наприклад «хто з кур'єрів вільний зараз».</p></details>
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <div class="controls" id="design-controls"></div>
+        <div class="flow" id="design-flow"></div>
+        <h3 id="design-h" style="font-size:18px;text-transform:none;letter-spacing:0;color:var(--ink);margin:10px 0 6px"></h3>
+        <div id="design-body" style="font-size:15px"></div>
+      </div>
+      <div class="card"><h3>Чек-лист: база зрозуміла, якщо…</h3>
+        <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:14.5px">
+          <li>кожна таблиця — одна сутність, названа іменником у множині (<code>orders</code>), з первинним ключем <code>id</code>;</li>
+          <li>кожен зв'язок — <code>FOREIGN KEY</code> з назвою <code>&lt;сутність&gt;_id</code>; M:N — окрема таблиця-зв'язка;</li>
+          <li>правила даних записані в схемі (<code>NOT NULL</code>, <code>CHECK</code>, <code>UNIQUE</code>), а не лише в коді;</li>
+          <li>гроші — <code>NUMERIC</code>, час — <code>TIMESTAMPTZ</code>;</li>
+          <li>кожен ключ Redis має формат <code>&lt;сутність&gt;:&lt;id&gt;</code> або <code>&lt;група&gt;:&lt;призначення&gt;</code>, усі описані в одному файлі, і в кожного відомо, з якої правди його можна відновити;</li>
+          <li>усе, що тимчасове, має TTL;</li>
+          <li>SQL живе в одному модулі (<code>db.py</code>), ключі — в одному (<code>config.py</code>).</li>
+        </ul></div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3 id="design-code-h">Результат у коді</h3><pre class="code" id="design-code"></pre></div>
+    </div>
+  </div>
+  <div class="course" id="design-course"></div>
+</section>
+
+<!-- ============ ОПИТУВАЛЬНИК ============ -->
+<section class="lesson" id="survey" data-title="Опитувальник: яке сховище обрати">
+  <h2>Опитувальник: куди покласти ці дані й у якій структурі</h2>
+  <p class="lead">Опиши один шматок даних своєї системи, відповівши на сім питань, і отримаєш рекомендацію: <b>яке сховище</b>, <b>яка структура</b> (таблиця чи тип Redis), <b>приклад ключа</b>, <b>аналог у «Смачно + Таксі»</b> і <b>чому</b>. Для розминки натисни один із прикладів.</p>
+  <div class="presets" id="survey-presets"></div>
+  <div class="grid">
+    <div class="card" id="survey-form"></div>
+    <div class="card" id="survey-out"></div>
+  </div>
+  <div class="course" id="survey-course"></div>
+</section>
+
+<!-- ============ КОНСТРУКТОР ============ -->
+<section class="lesson" id="builder" data-title="Конструктор: побудуй свою базу">
+  <h2>Конструктор: побудуй свою базу</h2>
+  <p class="lead">Додай сутності, їхні поля й зв'язки, познач, що з ними <b>робить система</b>: часто змінює, ставить у чергу, рахує, показує рейтинг, шукає поруч. Конструктор одразу збере <b>SQL-схему для PostgreSQL</b>, <b>карту ключів Redis</b> у стилі <code>config.py</code>, <b>список зв'язків</b> і <b>зауваження</b>, як рецензент. Почни з шаблону або з нуля.</p>
+  <div class="presets" id="builder-tpl"></div>
+  <div class="grid">
+    <div class="stack" id="builder-ents"></div>
+    <div class="stack">
+      <div class="card"><h3>Зауваження рецензента</h3><div id="builder-warn" style="font-size:14.5px"></div></div>
+      <div class="card"><h3>Зв'язки</h3><div id="builder-rel" style="font-size:14.5px"></div></div>
+      <div class="card"><h3>🐘 PostgreSQL: schema.sql</h3><pre class="code" id="builder-sql"></pre></div>
+      <div class="card"><h3>⚡ Redis: ключі (config.py)</h3><pre class="code" id="builder-redis"></pre></div>
+    </div>
+  </div>
+  <div class="course" id="builder-course"></div>
+</section>

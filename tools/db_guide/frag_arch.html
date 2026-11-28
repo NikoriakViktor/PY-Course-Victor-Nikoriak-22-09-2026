@@ -1,0 +1,65 @@
+<!-- ============ АРХІТЕКТУРА ============ -->
+<section class="lesson" id="arch" data-title="Схема сервісів">
+  <p class="kicker">Проєкт taxi_delivery_redis</p>
+  <h2>Архітектура: шість процесів, два сховища</h2>
+  <p class="lead">«Смачно + Таксі» — не одна програма, а <b>шість окремих процесів</b> з <code>docker-compose.yml</code>. Вони не викликають одне одного напряму: спілкуються через <b>Redis</b> (черга, спільний стан, події), а правду пишуть у <b>PostgreSQL</b>. Натисни на сервіс або сховище — побачиш, що він робить, що читає й пише та як подивитися його лог.</p>
+  <details class="predict"><summary>🔮 Прогноз: генератор створив замовлення. Як диспетчер про нього дізнається, якщо генератор не знає навіть адреси диспетчера?</summary><p>Через Redis: генератор робить <code>XADD orders:new</code>, а диспетчер чекає на цьому стрімі (<code>XREADGROUP … BLOCK 1000</code>). Вони знають лише назву черги. Тому диспетчерів можна запустити два, перезапустити чи на хвилину вимкнути — генератор цього навіть не помітить.</p></details>
+  <div class="card">
+    <svg class="arch" id="arch-svg" viewBox="0 0 1000 500" role="img" aria-label="Схема сервісів і сховищ"></svg>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <h3 id="arch-title">Натисни на блок схеми</h3>
+    <dl class="ecard" id="arch-card"></dl>
+  </div>
+  <div class="grid" style="margin-top:20px">
+    <div class="card">
+      <h3>Запуск і адреси</h3>
+      <pre class="log" style="white-space:pre">cd module_3/lessons/taxi_delivery_redis
+docker compose up --build
+
+дашборд        http://localhost:8060
+API (Swagger)  http://localhost:8100/docs
+Redis          redis-cli -p 6390
+PostgreSQL     psql postgresql://taxi:taxi@localhost:5434/smachno</pre>
+    </div>
+    <div class="card">
+      <h3>Подивитись усе наживо (другий термінал, та сама папка)</h3>
+      <pre class="log" style="white-space:pre">docker compose logs -f dispatcher simulator generator api
+docker compose logs -f redis-monitor     # кожна команда Redis + хто її надіслав
+docker compose logs -f postgres          # кожен SQL-запит + хто його виконав</pre>
+      <p class="note">Теги в логах: <code>TASK</code> — крок процесу, <code>QUEUE</code> — черга, <code>REDIS</code> — інші команди, <code>PG</code> — PostgreSQL, <code>EVENT</code> — подія, <code>WARN</code> — проблема.</p>
+    </div>
+  </div>
+  <div class="course" id="arch-course"></div>
+</section>
+
+<!-- ============ ТРАСА ЗАМОВЛЕННЯ ============ -->
+<section class="lesson" id="trace" data-title="Одне замовлення наскрізь">
+  <h2>Одне замовлення наскрізь: схема + справжні логи</h2>
+  <p class="lead">Те саме замовлення, що й на вкладці «Життя замовлення», але очима <b>сервісів</b>. На схемі підсвічуються процес і зв'язок, що працюють зараз. Під нею — рядки логів, <b>саме такі</b>, які ти побачиш у <code>docker compose logs</code>. Цей екран можна показувати поруч із запущеним проєктом.</p>
+  <div class="card">
+    <div class="controls" id="trace-controls"></div>
+    <div class="where" id="trace-where"></div>
+    <div class="msg" id="trace-msg" style="margin-bottom:10px"></div>
+    <svg class="arch" id="trace-svg" viewBox="0 0 1000 500" role="img" aria-label="Схема: хто працює зараз" style="max-width:860px;margin:0 auto"></svg>
+    <pre class="log" id="trace-log" style="height:260px;overflow-y:auto;white-space:pre-wrap;margin-top:12px"></pre>
+  </div>
+  <div class="course" id="trace-course"></div>
+</section>
+
+<!-- ============ ЧОМУ ТАК ============ -->
+<section class="lesson" id="why" data-title="Чому так, а не інакше">
+  <h2>Чому так, а не інакше</h2>
+  <p class="lead">Кожне рішення в проєкті відповідає на конкретну проблему. Тут зібрано питання, які студенти ставлять найчастіше. Відповідь завжди має форму «що обрали → яка альтернатива → чому не вона».</p>
+  <div class="whys" id="why-cards"></div>
+  <div class="course" id="why-course"></div>
+</section>
+
+<!-- ============ ШПАРГАЛКА ============ -->
+<section class="lesson" id="methods" data-title="Шпаргалка: функція → команди">
+  <h2>Шпаргалка: функція → команди → ключі</h2>
+  <p class="lead">Уся «карта методів» проєкту в одній таблиці: який сервіс, яка функція Python, які команди Redis чи SQL вона надсилає, яких ключів або таблиць торкається і навіщо. Шукай за ключем (<code>couriers:free</code>), командою (<code>SREM</code>) чи сервісом.</p>
+  <div class="filter"><input type="text" id="methods-q" placeholder="пошук: ключ, команда, функція…" aria-label="Пошук"><select id="methods-svc" aria-label="Сервіс"></select><span class="clock" id="methods-n"></span></div>
+  <div class="card"><div class="tablewrap"><table class="t" id="methods-table"></table></div></div>
+  <div class="course" id="methods-course"></div>
+</section>

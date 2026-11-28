@@ -1,0 +1,152 @@
+<!-- ============ CACHE-ASIDE ============ -->
+<section class="lesson" id="cache" data-title="Кеш меню (cache-aside)">
+  <p class="kicker">Патерн = задача + рішення</p>
+  <h2>Кеш меню: cache-aside та інвалідація</h2>
+  <p class="lead"><b>Задача.</b> Кожне замовлення читає меню ресторану, а меню змінюється раз на тиждень. Ходити щоразу в PostgreSQL — марна робота. <b>Рішення.</b> Спершу питаємо Redis. Якщо меню там немає (<i>miss</i>), беремо з PostgreSQL і кладемо в Redis на 60 с. Наступні запити отримують його з пам'яті (<i>hit</i>). <b>Ціна рішення</b> — кеш може застаріти.</p>
+  <details class="predict"><summary>🔮 Прогноз: менеджер підняв ціну борщу в PostgreSQL з 120 до 130 грн. Що побачить клієнт за 5 секунд? А через хвилину?</summary><p>За 5 секунд — стару ціну 120: вона лежить у кеші, а кеш про зміну не знає. Через хвилину (TTL 60 с) ключ зникне, наступний запит піде в PostgreSQL і побачить 130. Щоб не чекати, після зміни ціни роблять <code>DEL cache:menu:3</code> — інвалідацію.</p></details>
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <div class="controls" id="cache-controls"></div>
+        <div class="flow" id="cache-flow"></div>
+        <div class="msg" id="cache-msg"></div>
+        <div class="stats"><span>Час: <b id="cache-t">0 с</b></span><span>HIT: <b id="cache-hit">0</b></span><span>MISS: <b id="cache-miss">0</b></span><span>Ціна, яку побачив клієнт: <b id="cache-seen">—</b></span></div>
+      </div>
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <div class="card"><h3>⚡ Redis</h3><div class="ks" id="cache-keys"></div></div>
+        <div class="card"><h3>🐘 PostgreSQL</h3><div id="cache-pg"></div></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>app/menu.py (скорочено)</h3><pre class="code" id="cache-code"></pre></div>
+      <div class="card"><h3>Коли кеш доречний</h3><p style="margin:0;font-size:14.5px">Читаємо значно частіше, ніж змінюємо; трохи застаріле значення не шкодить; є «правда», з якої кеш можна відновити. Для балансу рахунку кеш — погана ідея.</p></div>
+    </div>
+  </div>
+  <div class="course" id="cache-course"></div>
+</section>
+
+<!-- ============ INCR + RATE LIMIT ============ -->
+<section class="lesson" id="limit" data-title="Лічильник і rate limit">
+  <h2>Атомарний лічильник і rate limit</h2>
+  <p class="lead"><b>Задача.</b> Порахувати замовлення клієнта за хвилину, коли рахують одночасно кілька процесів. <b>Наївно:</b> <code>n = GET</code>, потім <code>SET n + 1</code>. Між цими двома командами інший процес встигає зробити те саме, і одне збільшення губиться. <b>Рішення:</b> <code>INCR</code> — «прочитати, додати й записати» однією атомарною командою. Додаємо <code>EXPIRE 60</code>, і лічильник сам зникає через хвилину.</p>
+  <details class="predict"><summary>🔮 Прогноз: два процеси одночасно роблять <code>GET</code> (обидва бачать 5), а потім <code>SET 6</code>. Скільки буде в Redis? Скільки мало бути?</summary><p>Буде 6, а мало бути 7: одне замовлення «загубилось». З <code>INCR</code> Redis виконує дві команди по черзі, і результат завжди 7.</p></details>
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <h3>Гонка: GET + SET проти INCR</h3>
+        <div class="controls" id="limit-controls"></div>
+        <div class="three" style="grid-template-columns:1fr 1fr">
+          <div class="lane"><h4>GET + SET</h4><pre class="log" id="limit-naive" style="min-height:120px"></pre><div class="verdict" id="limit-vn"></div></div>
+          <div class="lane"><h4>INCR</h4><pre class="log" id="limit-atomic" style="min-height:120px"></pre><div class="verdict" id="limit-va"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Спробуй rate limit: не більше 3 замовлень за хвилину</h3>
+        <div class="controls"><button class="btn primary" id="limit-order" style="min-width:0">Замовити від client-7</button><button class="btn" id="limit-wait">+20 с</button><span class="clock" id="limit-clock"></span></div>
+        <pre class="log" id="limit-log" style="min-height:110px;max-height:220px"></pre>
+        <div class="ks" id="limit-keys" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>app/orders.py · check_rate_limit</h3><pre class="code" id="limit-code"></pre></div>
+      <div class="card"><h3>Діра «фіксованого вікна»</h3><p style="margin:0;font-size:14.5px">Вікно починається з першого <code>INCR</code>. 3 замовлення о 0:59 і ще 3 о 1:01 — шість за дві секунди, і всі дозволені. Ковзне вікно на ZSET (score = час, <code>ZREMRANGEBYSCORE</code> старіших за 60 с) цієї діри не має. Це задача 4 у проєкті.</p></div>
+    </div>
+  </div>
+  <div class="course" id="limit-course"></div>
+</section>
+
+<!-- ============ ТРИ ЧЕРГИ ============ -->
+<section class="lesson" id="queues" data-title="Три черги: LIST, Pub/Sub, Stream">
+  <h2>Три способи передати замовлення диспетчеру — і що буде, коли він упаде</h2>
+  <p class="lead"><b>Задача.</b> Генератор створює замовлення, а диспетчер — окремий процес — має обробити <b>кожне</b>. У Redis є три механізми, схожі на черги. Запусти однаковий сценарій для всіх трьох: диспетчер бере замовлення, <b>падає посеред обробки #2</b>, поки він лежить, приходить #3, потім він піднімається. Порахуй, що загубилось.</p>
+  <details class="predict"><summary>🔮 Прогноз: у якому стовпці загубиться найбільше замовлень? І чому в проєкті черга замовлень — Stream, а події для дашборду — Pub/Sub?</summary><p>Найбільше губить Pub/Sub: він нічого не зберігає й доставляє лише тим, хто слухає саме зараз. LIST втратить #2: <code>LPOP</code> уже забрав його з черги, а диспетчер не доробив. Stream не втратить нічого: #2 лишиться в <b>pending</b>, поки не прийде <code>XACK</code>. Замовлення втрачати не можна — тому Stream. Подію «#42 доставлено» для екрана втратити не страшно — тому Pub/Sub.</p></details>
+  <div class="card">
+    <div class="controls" id="queues-controls"></div>
+    <div class="msg" id="queues-msg" style="margin-bottom:10px"></div>
+    <div class="three">
+      <div class="lane" id="queues-L"></div>
+      <div class="lane" id="queues-P"></div>
+      <div class="lane" id="queues-S"></div>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:20px">
+    <div class="card">
+      <h3>Коли що брати</h3>
+      <div class="tablewrap"><table class="t">
+        <tr><th></th><th>LIST</th><th>Pub/Sub</th><th>Stream</th></tr>
+        <tr><td>Зберігає повідомлення</td><td>так, поки не заберуть</td><td>ні</td><td>так, журнал</td></tr>
+        <tr><td>Кілька обробників ділять роботу</td><td>так (<code>BLPOP</code>)</td><td>ні — кожен отримує все</td><td>так (consumer group)</td></tr>
+        <tr><td>Падіння посеред обробки</td><td>повідомлення втрачено</td><td>втрачено</td><td>лишається в pending</td></tr>
+        <tr><td>Історію можна перечитати</td><td>ні</td><td>ні</td><td>так (<code>XRANGE</code>)</td></tr>
+        <tr><td>У «Смачно + Таксі»</td><td><code>events:log</code> (стрічка)</td><td><code>events:orders</code> (екран)</td><td><code>orders:new</code> (робота)</td></tr>
+      </table></div>
+    </div>
+    <div class="card"><h3>app/dispatcher.py · run() (скорочено)</h3><pre class="code" id="queues-code"></pre></div>
+  </div>
+  <div class="course" id="queues-course"></div>
+</section>
+
+<!-- ============ ЗАХОПЛЕННЯ КУР'ЄРА ============ -->
+<section class="lesson" id="claim" data-title="Захоплення кур'єра (SREM)">
+  <h2>Два диспетчери, один кур'єр: атомарне захоплення</h2>
+  <p class="lead"><b>Задача.</b> Два диспетчери одночасно обробляють замовлення #7 і #8. Для обох найближчий вільний кур'єр — <b>c4</b>. <b>Наївно:</b> «перевірити, чи вільний (<code>SISMEMBER</code>), і позначити зайнятим». Між перевіркою й позначкою вклинюється інший диспетчер. <b>Рішення:</b> <code>SREM couriers:free c4</code> повертає 1 лише тому, хто прибрав кур'єра першим. Хто отримав 0, бере наступного.</p>
+  <details class="predict"><summary>🔮 Прогноз: що побачить кур'єр c4 у наївному варіанті?</summary><p>Два замовлення одночасно: обидва диспетчери перевірили «c4 вільний?», обидва отримали «так» і обидва його призначили. З <code>SREM</code> друга перевірка поверне 0, і #8 піде кур'єру c2.</p></details>
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <div class="controls" id="claim-controls"></div>
+        <div class="controls"><label>Спосіб <select id="claim-mode"><option value="naive">наївно: SISMEMBER, потім позначити</option><option value="atomic" selected>атомарно: SREM → 1 або 0</option></select></label></div>
+        <pre class="log" id="claim-log" style="min-height:170px"></pre>
+        <div class="msg" id="claim-msg"></div>
+      </div>
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <div class="card"><h3>⚡ couriers:free</h3><div class="ks" id="claim-keys"></div></div>
+        <div class="card"><h3>Хто кого отримав</h3><div id="claim-res"></div></div>
+      </div>
+    </div>
+    <div class="card"><h3>app/dispatcher.py · try_assign (скорочено)</h3><pre class="code" id="claim-code"></pre></div>
+  </div>
+  <div class="course" id="claim-course"></div>
+</section>
+
+<!-- ============ MULTI/EXEC ============ -->
+<section class="lesson" id="multi" data-title="Транзакція MULTI/EXEC">
+  <h2>MULTI/EXEC: замовлення з'являється цілком або ніяк</h2>
+  <p class="lead"><b>Задача.</b> Створити замовлення — це п'ять команд: картка <code>HSET</code>, запис у черзі <code>XADD</code>, місце серед активних <code>ZADD</code> і два лічильники. Якщо процес упаде після <code>HSET</code>, але до <code>XADD</code>, лишиться «зомбі»: картка є, а диспетчер про замовлення ніколи не дізнається. <b>Рішення:</b> <code>MULTI</code> … <code>EXEC</code>. Redis збирає команди в чергу й виконує їх разом, коли приходить <code>EXEC</code>. До <code>EXEC</code> не змінюється нічого.</p>
+  <details class="predict"><summary>🔮 Прогноз: процес упав між <code>MULTI</code> і <code>EXEC</code>. Що лишиться в Redis? А <code>order:seq</code>?</summary><p>З транзакції — нічого: команди в черзі просто зникають разом з'єднанням. <code>INCR order:seq</code> виконано <b>до</b> <code>MULTI</code>, тож номер 43 «згорить». Дірка в нумерації нікому не шкодить, а от зомбі-замовлення шкодило б.</p></details>
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <div class="controls" id="multi-controls"></div>
+        <div class="controls"><label>Спосіб <select id="multi-mode"><option value="plain">окремі команди</option><option value="multi" selected>MULTI / EXEC</option></select></label></div>
+        <pre class="log" id="multi-log" style="min-height:170px"></pre>
+        <div class="msg" id="multi-msg"></div>
+      </div>
+      <div class="card"><h3>⚡ Redis після сценарію</h3><div class="ks" id="multi-keys"></div></div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>app/orders.py · create_order (скорочено)</h3><pre class="code" id="multi-code"></pre></div>
+      <div class="card"><h3>MULTI у Redis ≠ транзакція PostgreSQL</h3><p style="margin:0;font-size:14.5px">У PostgreSQL є <code>ROLLBACK</code>: помилка всередині транзакції скасовує все. У Redis відкату немає. Якщо одна команда всередині <code>EXEC</code> впаде (наприклад, <code>WRONGTYPE</code>), решта однаково виконається. <code>MULTI</code> гарантує дві речі: інші клієнти не вклиняться між командами, і до <code>EXEC</code> не виконується нічого. У redis-py це <code>r.pipeline(transaction=True)</code>.</p></div>
+    </div>
+  </div>
+  <div class="course" id="multi-course"></div>
+</section>
+
+<!-- ============ ВІДКЛАДЕНИЙ ПОВТОР ============ -->
+<section class="lesson" id="retry" data-title="Відкладений повтор (ZSET)">
+  <h2>Вільних кур'єрів немає: відкладений повтор на ZSET</h2>
+  <p class="lead"><b>Задача.</b> Замовлення прийшло, а всі кур'єри зайняті. Відмовити не можна, крутити цикл «шукаю-шукаю-шукаю» — марно. <b>Рішення:</b> «розклад» у sorted set. Score — <b>час, коли спробувати знову</b>: <code>ZADD orders:waiting &lt;зараз + 3 с&gt; 50</code>. Диспетчер на кожному колі питає <code>ZRANGEBYSCORE orders:waiting 0 &lt;зараз&gt;</code> — «чий час уже настав?».</p>
+  <details class="predict"><summary>🔮 Прогноз: навіщо після <code>ZRANGEBYSCORE</code> ще й <code>ZREM</code>, перевіряючи, що він повернув 1?</summary><p>Диспетчерів може бути кілька, і обидва побачать #50 у розкладі. <code>ZREM</code> поверне 1 лише одному — той і повторює пошук. Це те саме атомарне захоплення, що й <code>SREM</code> для кур'єра.</p></details>
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <div class="controls" id="retry-controls"></div>
+        <div class="stats" style="margin:0 0 10px"><span>Час: <b id="retry-t">0,0 с</b></span></div>
+        <pre class="log" id="retry-log" style="min-height:200px"></pre>
+      </div>
+      <div class="card"><h3>⚡ Redis</h3><div class="ks" id="retry-keys"></div></div>
+    </div>
+    <div class="card"><h3>app/dispatcher.py (скорочено)</h3><pre class="code" id="retry-code"></pre></div>
+  </div>
+  <div class="course" id="retry-course"></div>
+</section>

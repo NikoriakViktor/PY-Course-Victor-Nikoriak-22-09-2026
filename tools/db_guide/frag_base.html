@@ -1,0 +1,49 @@
+<!-- ============ КАРТА ============ -->
+<section class="lesson" id="kart" data-title="Три бази — три ролі">
+  <p class="kicker">Почни звідси</p>
+  <h2>Три бази — три ролі</h2>
+  <p class="lead">У «Смачно + Таксі» дані живуть у трьох місцях, і в кожного своя робота. <b>PostgreSQL</b> пам'ятає назавжди. <b>Redis</b> тримає те, що потрібно «зараз»: де кур'єр, хто вільний, що в черзі. <b>DuckDB</b> відповідає на великі питання до всієї історії. Не «яка база краща», а «яка робота в цих даних».</p>
+  <details class="predict"><summary>🔮 Прогноз: чому б не тримати все в одному PostgreSQL? Що з ним станеться, якщо 8 кур'єрів щосекунди оновлюють координати, а дашборд щосекунди питає «хто де»?</summary><p>Працюватиме, але кожне оновлення — це запис на диск, журнал WAL і нова версія рядка (MVCC). Нам потрібна лише остання точка, а історія координат нікому не потрібна. Redis тримає її в пам'яті й оновлює за мікросекунди. Зате для завершеного замовлення з грошима потрібна саме надійність PostgreSQL.</p></details>
+  <div class="card">
+    <h3>Натисни на базу</h3>
+    <div class="stores" id="kart-stores">
+      <button class="store pg" data-k="pg"><h3>🐘 PostgreSQL</h3><p class="role">Джерело правди</p><p>Довідники, гроші, завершені замовлення. Диск, транзакції, SQL.</p></button>
+      <button class="store rd" data-k="rd"><h3>⚡ Redis</h3><p class="role">Гаряча пам'ять + координація</p><p>Кеш, черга, позиції, «хто вільний», лічильники. Пам'ять, атомарні команди.</p></button>
+      <button class="store dk" data-k="dk"><h3>🦆 DuckDB</h3><p class="role">Аналітика по історії</p><p>Мільйони рядків з файлів parquet: суми, середні, тренди.</p></button>
+    </div>
+    <div class="detail" id="kart-detail"></div>
+  </div>
+  <div class="stack" style="margin-top:20px">
+    <div class="card">
+      <h3>Як дані рухаються</h3>
+      <pre class="log" style="white-space:pre;font-size:13px">  клієнт ──замовлення──▶  ⚡ Redis  ◀──щосекунди──  кур'єри (GEO)
+                           │  черга, «хто вільний», кеш, лічильники
+              доставлено ──┘
+                           ▼
+                      🐘 PostgreSQL   (джерело правди: довідники + історія)
+                           │  вивантаження раз на добу / тиждень
+                           ▼
+                      🦆 DuckDB + parquet   (аналітика: «виторг по районах за рік»)</pre>
+      <p class="note">Redis і PostgreSQL працюють <b>разом</b>, а не замість одне одного. Redis прискорює й координує. PostgreSQL пам'ятає. DuckDB аналізує те, що PostgreSQL накопичив.</p>
+    </div>
+    <div class="card">
+      <h3>Правило вибору: три питання</h3>
+      <ol class="rule">
+        <li><b>Чи можна це втратити?</b> Ні (гроші, довідники, завершені замовлення) → <span class="pill pg">PostgreSQL</span></li>
+        <li><b>Потрібно «зараз» і дуже швидко?</b> Живе секунди чи хвилини, або кілька сервісів мають домовитися (черга, захоплення, лічильник) → <span class="pill rd">Redis</span>. Якщо це копія, правда однаково лежить у PostgreSQL.</li>
+        <li><b>Питання до всієї історії?</b> Суми, середні, тренди по мільйонах рядків → <span class="pill dk">DuckDB</span> над вивантаженою історією.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="course" id="kart-course"></div>
+</section>
+
+<!-- ============ КУДИ ПОКЛАСТИ ============ -->
+<section class="lesson" id="kudy" data-title="Тренажер: куди покласти?">
+  <h2>Тренажер: куди покласти ці дані?</h2>
+  <p class="lead">Для кожного шматка даних «Смачно + Таксі» обери базу за трьома питаннями з попередньої сторінки. Після відповіді побачиш, де саме ці дані лежать у проєкті: ключ Redis або таблицю PostgreSQL.</p>
+  <div class="controls"><span class="stats" style="margin:0">Правильно: <b id="kudy-score">0 з 0</b></span><button class="btn" id="kudy-reset">Почати знову</button></div>
+  <div class="qz" id="kudy-quiz"></div>
+  <p class="note">Часто відповідь — «обидві»: правда в PostgreSQL, швидка копія в Redis. Так влаштовані меню (<code>menu_items</code> → <code>cache:menu:&lt;id&gt;</code>) і ресторани (<code>restaurants</code> → <code>restaurant:&lt;id&gt;</code> + <code>restaurants:geo</code>).</p>
+  <div class="course" id="kudy-course"></div>
+</section>

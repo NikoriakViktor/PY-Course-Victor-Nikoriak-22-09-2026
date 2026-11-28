@@ -1,0 +1,71 @@
+<!-- ============ ТИПИ ============ -->
+<section class="lesson" id="types" data-title="Типи = структури Python">
+  <p class="kicker">Redis — це «словник структур даних» для кількох програм одночасно</p>
+  <h2>Типи Redis — це структури даних, які ти вже знаєш</h2>
+  <p class="lead">Redis — великий <code>dict</code>: <b>ключ → значення</b>. Але значення буває не лише рядком: є список, словник, множина, відсортована множина, журнал. Кожен тип — знайома структура з Python і уроку 29. Відмінність лише одна: ця структура лежить <b>в окремому сервері</b>, і з нею одночасно працюють усі сервіси.</p>
+  <details class="predict"><summary>🔮 Прогноз: чому не тримати кур'єрів у звичайному <code>dict</code> усередині Python-процесу диспетчера?</summary><p>Бо в «Смачно + Таксі» шість процесів. Генератор, диспетчер, симулятор, API і дашборд — окремі програми, часто на різних машинах, і кожна має свою пам'ять. <code>dict</code> у диспетчері не побачить ні симулятор, ні дашборд. Redis — спільна пам'ять для всіх. До того ж кожна його команда атомарна, тож два процеси не зіпсують дані, змінюючи їх одночасно.</p></details>
+  <div class="card">
+    <div class="tablewrap"><table class="t">
+      <tr><th>Тип Redis</th><th>Як у Python</th><th>Головні команди</th><th>У «Смачно + Таксі»</th><th>Навіщо саме цей тип</th></tr>
+      <tr><td><b>STRING</b></td><td><code>str</code> / <code>int</code></td><td><code>SET</code> <code>GET</code> <code>INCR</code> <code>EXPIRE</code></td><td><code>cache:menu:3</code>, <code>order:seq</code>, <code>ratelimit:client-7</code>, <code>stats:*</code></td><td>Одне значення. <code>INCR</code> — атомарний лічильник; <code>EX</code> — значення саме зникне.</td></tr>
+      <tr><td><b>HASH</b></td><td><code>dict</code> полів</td><td><code>HSET</code> <code>HGET</code> <code>HGETALL</code> <code>HINCRBY</code></td><td><code>order:42</code>, <code>courier:c4</code>, <code>restaurant:3</code></td><td>Картка об'єкта: змінюємо одне поле (<code>status</code>), не переписуючи все.</td></tr>
+      <tr><td><b>LIST</b></td><td><code>collections.deque</code></td><td><code>LPUSH</code> <code>RPOP</code> <code>LRANGE</code> <code>LTRIM</code> <code>BLPOP</code></td><td><code>events:log</code> — останні 30 подій</td><td>Стрічка «нове зверху» з обрізанням до 30 (<code>LTRIM</code>), як <code>deque(maxlen=30)</code>.</td></tr>
+      <tr><td><b>SET</b></td><td><code>set</code></td><td><code>SADD</code> <code>SREM</code> <code>SISMEMBER</code> <code>SMEMBERS</code></td><td><code>couriers:free</code>, <code>couriers:all</code></td><td>Унікальні елементи. <code>SREM</code> повертає 1 або 0 — атомарне «захоплення».</td></tr>
+      <tr><td><b>ZSET</b></td><td><code>dict</code> + сортування за числом (купа)</td><td><code>ZADD</code> <code>ZINCRBY</code> <code>ZREVRANGE</code> <code>ZRANGEBYSCORE</code></td><td><code>lb:couriers:deliveries</code>, <code>orders:active</code>, <code>orders:waiting</code></td><td>Рейтинг (score = кількість) і «розклад» (score = час: що вже пора повторити).</td></tr>
+      <tr><td><b>STREAM</b></td><td>журнал + «хто що взяв і чи підтвердив»</td><td><code>XADD</code> <code>XREADGROUP</code> <code>XACK</code> <code>XPENDING</code></td><td><code>orders:new</code> + група <code>dispatchers</code></td><td>Надійна черга: повідомлення не зникає, поки обробник не скаже <code>XACK</code>.</td></tr>
+      <tr><td><b>GEO</b></td><td>словник «ім'я → (lon, lat)» з пошуком у радіусі</td><td><code>GEOADD</code> <code>GEOSEARCH</code> <code>GEOPOS</code></td><td><code>couriers:geo</code>, <code>restaurants:geo</code></td><td>«Хто найближче до ресторану?» — одна команда замість циклу по всіх кур'єрах.</td></tr>
+      <tr><td><b>HyperLogLog</b></td><td>приблизний <code>len(set)</code></td><td><code>PFADD</code> <code>PFCOUNT</code></td><td><code>stats:customers:unique</code></td><td>Скільки різних клієнтів: 12 КБ замість пам'яті на кожного, похибка ~0,8 %.</td></tr>
+      <tr><td><b>PUB/SUB</b></td><td>не структура, а «радіо»</td><td><code>PUBLISH</code> <code>SUBSCRIBE</code></td><td><code>events:orders</code></td><td>Сповістити всіх, хто слухає зараз. Нічого не зберігає.</td></tr>
+    </table></div>
+  </div>
+  <div class="grid" style="margin-top:20px">
+    <div class="card">
+      <h3>Чим Redis відрізняється від dict у Python</h3>
+      <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+        <li><b>Спільний</b> для всіх процесів: генератор пише, диспетчер читає, дашборд показує.</li>
+        <li><b>Атомарний</b>: кожна команда виконується цілком, і ніхто не вклиниться посередині. <code>INCR</code> з двох процесів не загубить жодного збільшення.</li>
+        <li><b>TTL</b>: значення може саме зникнути (<code>EX 60</code>). Кеш і лічильники прибирають за собою.</li>
+        <li><b>Мережа</b>: кожна команда — це запит до сервера (~0,1–1 мс). Тому кілька команд відправляють пачкою (<code>pipeline</code>).</li>
+        <li><b>Немає схеми та зв'язків</b>: структуру тримає дисципліна імен ключів <code>&lt;сутність&gt;:&lt;id&gt;</code> в одному файлі <code>app/config.py</code>.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Як читати ключ</h3>
+      <div class="kv">
+        <b>order:42</b><span>сутність <i>order</i>, id 42 → HASH-картка</span>
+        <b>cache:menu:3</b><span>група <i>cache</i>, що кешуємо — <i>menu</i> ресторану 3</span>
+        <b>orders:new</b><span>група <i>orders</i>, призначення <i>new</i> → черга</span>
+        <b>lb:couriers:deliveries</b><span><i>leaderboard</i> кур'єрів за доставками</span>
+        <b>stats:orders:2026-11-28</b><span>лічильник замовлень за день</span>
+      </div>
+      <p class="note">Двокрапка — лише домовленість: для Redis це звичайний символ. Але так <code>SCAN … MATCH order:*</code> знаходить усі картки замовлень, а людина одразу бачить, що лежить у ключі.</p>
+    </div>
+  </div>
+  <details class="deep"><summary>🔴 Поглиблення: чому Redis такий швидкий і що буде після перезапуску</summary>
+    <ul>
+      <li>Усі дані в оперативній пам'яті, а команди виконує один потік по черзі. Звідси й атомарність без блокувань.</li>
+      <li><b>RDB</b> — знімок усієї пам'яті на диск раз на кілька хвилин. <b>AOF</b> — журнал кожної команди: у нашому <code>docker-compose.yml</code> стоїть <code>--appendonly yes</code>. Після перезапуску Redis відтворює дані з AOF.</li>
+      <li>Коли пам'ять закінчується, поведінку задає <code>maxmemory-policy</code>: наприклад, <code>allkeys-lru</code> викидає те, що давно не читали. Для кешу це добре, для черги — катастрофа.</li>
+      <li>Протокол RESP і «що їде мережею» — у ноутбуці уроку 31, розділ 14.</li>
+    </ul>
+  </details>
+  <div class="course" id="types-course"></div>
+</section>
+
+<!-- ============ ПІСОЧНИЦЯ ============ -->
+<section class="lesson" id="sandbox" data-title="Пісочниця Redis">
+  <h2>Пісочниця: введи команду — подивись, що в Redis</h2>
+  <p class="lead">Ліворуч — термінал, як <code>redis-cli</code>. Праворуч — усі ключі «коробками»: тип, вміст і TTL. Почни з готового сценарію зверху або введи команду сам. Відповіді збігаються зі справжнім Redis; перевіряли на Redis 8.</p>
+  <details class="predict"><summary>🔮 Прогноз: сценарій «Черга зі збоєм». Диспетчер d1 прочитав замовлення 7 і впав, не надіславши <code>XACK</code>. Що покаже <code>XPENDING</code>?</summary><p>Одне непідтверджене повідомлення за споживачем <code>d1</code>. Після перезапуску d1 читає з id <code>0</code> і бачить своє «недороблене» повідомлення. Так <code>dispatcher.run()</code> доробляє замовлення після падіння.</p></details>
+  <div class="presets" id="sandbox-presets"></div>
+  <div class="grid">
+    <div class="card">
+      <pre class="term" id="sandbox-term"></pre>
+      <div class="termin"><input type="text" id="sandbox-in" placeholder="наприклад: INCR order:seq" autocomplete="off" spellcheck="false" aria-label="Команда Redis"><button class="btn primary" id="sandbox-go" style="min-width:0">Виконати</button></div>
+      <div class="controls" style="margin:10px 0 0"><button class="btn" id="sandbox-tick">+10 с</button><button class="btn" id="sandbox-flush">FLUSHDB (очистити)</button><span class="clock" id="sandbox-clock"></span></div>
+    </div>
+    <div class="card"><h3>Ключі зараз</h3><div class="ks" id="sandbox-keys"></div></div>
+  </div>
+  <p class="note">Спрощення пісочниці: час віртуальний (кнопка «+10 с»). <code>PFCOUNT</code> рахує точно, а справжній HyperLogLog — приблизно. <code>PUBLISH</code> повертає 0, бо тут немає підписників. <code>XREADGROUP</code> без <code>BLOCK</code>. Команди: <code>SET GET DEL EXISTS TYPE KEYS INCR INCRBY DECR EXPIRE TTL PERSIST · HSET HGET HGETALL HDEL HINCRBY HLEN · LPUSH RPUSH LPOP RPOP LRANGE LLEN LTRIM · SADD SREM SMEMBERS SISMEMBER SCARD · ZADD ZINCRBY ZSCORE ZRANK ZRANGE ZREVRANGE ZRANGEBYSCORE ZREM ZCARD · XADD XLEN XGROUP CREATE XREADGROUP XACK XPENDING · GEOADD GEOPOS GEOSEARCH · PFADD PFCOUNT · MULTI EXEC DISCARD · PUBLISH PING FLUSHDB</code>.</p>
+  <div class="course" id="sandbox-course"></div>
+</section>
