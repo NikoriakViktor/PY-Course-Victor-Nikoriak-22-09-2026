@@ -19,6 +19,8 @@ RUN = """sid => { const out = []; const sec = document.getElementById(sid);
   const sels = [...sec.querySelectorAll('.controls select')];
   if (!sels.length) play();
   for (const s of sels) for (const o of s.options) { s.value = o.value; s.dispatchEvent(new Event('change')); play(); }
+  if (sid === 'sandbox') for (const b of sec.querySelectorAll('#sandbox-presets button')) { b.click(); let k = 0;
+      while (!document.getElementById('sandbox-next').disabled && k < 100) { document.getElementById('sandbox-next').click(); k++; } out.push(b.dataset.p + ':' + k); }
   sec.querySelectorAll('.qz .q').forEach(q => q.querySelector('button').click());
   sec.querySelectorAll('#sandbox-presets button, #survey-presets button, #builder-tpl button, #design-flow .node, .store, .er .tb, svg.arch [data-b]').forEach(b => b.dispatchEvent(new MouseEvent('click', {bubbles: true})));
   return out.join(' '); }"""

@@ -53,19 +53,23 @@
 </section>
 
 <!-- ============ ПІСОЧНИЦЯ ============ -->
-<section class="lesson" id="sandbox" data-title="Пісочниця Redis">
-  <h2>Пісочниця: введи команду — подивись, що в Redis</h2>
-  <p class="lead">Ліворуч — термінал, як <code>redis-cli</code>. Праворуч — усі ключі «коробками»: тип, вміст і TTL. Почни з готового сценарію зверху або введи команду сам. Відповіді збігаються зі справжнім Redis; перевіряли на Redis 8.</p>
-  <details class="predict"><summary>🔮 Прогноз: сценарій «Черга зі збоєм». Диспетчер d1 прочитав замовлення 7 і впав, не надіславши <code>XACK</code>. Що покаже <code>XPENDING</code>?</summary><p>Одне непідтверджене повідомлення за споживачем <code>d1</code>. Після перезапуску d1 читає з id <code>0</code> і бачить своє «недороблене» повідомлення. Так <code>dispatcher.run()</code> доробляє замовлення після падіння.</p></details>
+<section class="lesson" id="sandbox" data-title="Пісочниця: від проблеми до команди">
+  <h2>Пісочниця: від проблеми до команди</h2>
+  <p class="lead">Кожна команда Redis розв'язує конкретну проблему. Обери проблему, прочитай, чому «звичайне» рішення ламається, і проходь кроки по одному: спершу <b>передбач</b>, що відповість Redis, потім <b>виконай</b> і прочитай, <b>що зробила команда</b>, <b>навіщо вона тут</b> і <b>як це виглядало б у Python</b>. Праворуч видно, що змінилось у Redis. Відповіді збігаються зі справжнім Redis 8.</p>
   <div class="presets" id="sandbox-presets"></div>
+  <div class="card sb-problem" id="sandbox-problem"></div>
   <div class="grid">
-    <div class="card">
-      <pre class="term" id="sandbox-term"></pre>
-      <div class="termin"><input type="text" id="sandbox-in" placeholder="наприклад: INCR order:seq" autocomplete="off" spellcheck="false" aria-label="Команда Redis"><button class="btn primary" id="sandbox-go" style="min-width:0">Виконати</button></div>
-      <div class="controls" style="margin:10px 0 0"><button class="btn" id="sandbox-tick">+10 с</button><button class="btn" id="sandbox-flush">FLUSHDB (очистити)</button><span class="clock" id="sandbox-clock"></span></div>
+    <div class="stack">
+      <div class="card sb-step" id="sandbox-step"></div>
+      <div class="card"><h3>Термінал (redis-cli)</h3>
+        <pre class="term" id="sandbox-term"></pre>
+        <div class="termin"><input type="text" id="sandbox-in" placeholder="своя команда, напр. INCR order:seq" autocomplete="off" spellcheck="false" aria-label="Команда Redis"><button class="btn" id="sandbox-go" style="min-width:0">Виконати</button></div>
+        <div id="sandbox-dict" style="font-size:14px;margin-top:8px"></div>
+        <div class="controls" style="margin:10px 0 0"><button class="btn" id="sandbox-tick">+10 с</button><button class="btn" id="sandbox-flush">FLUSHDB (очистити)</button><span class="clock" id="sandbox-clock"></span></div>
+      </div>
     </div>
-    <div class="card"><h3>Ключі зараз</h3><div class="ks" id="sandbox-keys"></div></div>
+    <div class="card"><h3>Що зараз у Redis</h3><div class="ks" id="sandbox-keys"></div></div>
   </div>
-  <p class="note">Спрощення пісочниці: час віртуальний (кнопка «+10 с»). <code>PFCOUNT</code> рахує точно, а справжній HyperLogLog — приблизно. <code>PUBLISH</code> повертає 0, бо тут немає підписників. <code>XREADGROUP</code> без <code>BLOCK</code>. Команди: <code>SET GET DEL EXISTS TYPE KEYS INCR INCRBY DECR EXPIRE TTL PERSIST · HSET HGET HGETALL HDEL HINCRBY HLEN · LPUSH RPUSH LPOP RPOP LRANGE LLEN LTRIM · SADD SREM SMEMBERS SISMEMBER SCARD · ZADD ZINCRBY ZSCORE ZRANK ZRANGE ZREVRANGE ZRANGEBYSCORE ZREM ZCARD · XADD XLEN XGROUP CREATE XREADGROUP XACK XPENDING · GEOADD GEOPOS GEOSEARCH · PFADD PFCOUNT · MULTI EXEC DISCARD · PUBLISH PING FLUSHDB</code>.</p>
+  <details class="deep"><summary>🔴 Спрощення пісочниці і список команд</summary><p>Час віртуальний (кнопка «+10 с»). <code>PFCOUNT</code> рахує точно, а справжній HyperLogLog — приблизно. <code>PUBLISH</code> повертає 0, бо тут немає підписників. <code>XREADGROUP</code> без <code>BLOCK</code>. Команди: <code>SET GET DEL EXISTS TYPE KEYS INCR INCRBY DECR EXPIRE TTL PERSIST · HSET HGET HGETALL HDEL HINCRBY HLEN · LPUSH RPUSH LPOP RPOP LRANGE LLEN LTRIM · SADD SREM SMEMBERS SISMEMBER SCARD · ZADD ZINCRBY ZSCORE ZRANK ZRANGE ZREVRANGE ZRANGEBYSCORE ZREM ZCARD · XADD XLEN XGROUP CREATE XREADGROUP XACK XPENDING · GEOADD GEOPOS GEOSEARCH · PFADD PFCOUNT · MULTI EXEC DISCARD · PUBLISH PING FLUSHDB</code>. Введи будь-яку — під терміналом з'явиться пояснення.</p></details>
   <div class="course" id="sandbox-course"></div>
 </section>
