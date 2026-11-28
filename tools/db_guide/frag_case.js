@@ -7,10 +7,16 @@
     sqlLoading=new Promise((ok,fail)=>{const s=document.createElement('script');s.src=SQLJS+'sql-wasm.js';
       s.onload=()=>initSqlJs({locateFile:f=>SQLJS+f}).then(x=>{SQL=x;ok(x);},fail);s.onerror=()=>{sqlLoading=null;fail(new Error('не вдалося завантажити SQLite (потрібен інтернет)'));};document.head.appendChild(s);});
     return sqlLoading;}
-  const ST={};CASES.forEach(c=>ST[c.id]={solved:new Set(),q:0,ed:{}});
+  const ST={};CASES.forEach(c=>ST[c.id]={solved:new Set(),q:0,ed:{},pen:{},pts:{}});
+  const BEST=(()=>{try{return JSON.parse(localStorage.getItem('dbguide-cases')||'{}');}catch(e){return{};}})();
+  const saveBest=()=>{try{localStorage.setItem('dbguide-cases',JSON.stringify(BEST));}catch(e){}};
+  const total=st=>Object.values(st.pts).reduce((a,b)=>a+b,0);
+  const rank=p=>p>=450?'🥇 Шерлок':p>=350?'🥈 Детектив':p>=200?'🥉 Слідчий':'🔎 Стажер';
+  const pen=(i,k,v)=>{const st=ST[cur.id];st.pen[i]=st.pen[i]||{hint:0,show:0,wrong:0};if(k==='wrong')st.pen[i].wrong+=v;else st.pen[i][k]=v;};
+  const qpts=i=>{const p=ST[cur.id].pen[i]||{hint:0,show:0,wrong:0};return Math.max(10,100-p.hint-p.show-p.wrong);};
   let cur=null,db=null,R=null;
   const STORE={pg:'🐘 PostgreSQL',rd:'⚡ Redis',dk:'🦆 DuckDB'};
-  $('#detect-cases').innerHTML=CASES.map(c=>`<button class="cs ${c.store}" data-c="${c.id}"><span class="st" id="detect-st-${c.id}"></span><small>${STORE[c.store]} · ${c.level}</small><b>${esc(c.title)}</b><small>${c.topics}</small></button>`).join('');
+  $('#detect-cases').innerHTML=CASES.map(c=>`<button class="cs ${c.store}" data-c="${c.id}"><span class="st" id="detect-st-${c.id}">${BEST[c.id]?'🏅 '+BEST[c.id]:''}</span><small>${STORE[c.store]} · ${c.level}</small><b>${esc(c.title)}</b><small>${c.topics}</small></button>`).join('');
   $('#detect-cases').onclick=e=>{const b=e.target.closest('[data-c]');if(b)openCase(b.dataset.c);};
   const status=t=>$('#detect-status').textContent=t;
   /* ---- виконання ---- */
@@ -24,12 +30,19 @@
   /* ---- справа ---- */
   async function openCase(id){cur=CASES.find(c=>c.id===id);const st=ST[id];
     document.querySelectorAll('#detect-cases .cs').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===id));
-    $('#detect-brief').innerHTML=`<h3 style="font-size:19px;text-transform:none;letter-spacing:0;color:var(--ink);margin:0 0 6px">${STORE[cur.store]} · Справа «${esc(cur.title)}»</h3><p style="margin:0">${cur.brief}</p>${cur.engine_note?`<p class="note" style="margin:8px 0 0">${cur.engine_note}</p>`:''}`;
+    drawBrief();
     $('#detect-out').innerHTML='';$('#detect-verdict').innerHTML='';$('#detect-hintbox').innerHTML='';
     if(cur.engine==='redis'){R=new MiniRedis();cur.setup.forEach(l=>R.exec(rsplit(l)));db=null;status('');drawSchema();showQ(st.q);return;}
     status('Завантажую SQLite…');$('#detect-run').disabled=true;
     try{await loadSql();}catch(e){status('');$('#detect-schema').innerHTML='';$('#detect-q').innerHTML=`<p class="note">⚠ ${esc(e.message)}. Справа виконує SQL прямо в браузері, тож потрібен інтернет, щоб завантажити рушій.</p>`;return;}
     if(cur.id!==id)return;db=new SQL.Database();db.run(cur.schema+cur.data);status('');$('#detect-run').disabled=false;drawSchema();showQ(st.q);}
+  function drawBrief(){const st=ST[cur.id],done=st.solved.size===cur.questions.length;
+    $('#detect-brief').innerHTML=`<div class="casehead"><div><h3 style="font-size:20px;text-transform:none;letter-spacing:0;color:var(--ink);margin:0">🗂️ Справа «${esc(cur.title)}» <span style="font-size:14px;color:var(--muted);font-weight:400">${cur.level} · ${STORE[cur.store]}</span></h3>
+      <div class="meta">📍 ${esc(cur.place)} · 🕘 ${esc(cur.time)} · веде: ${esc(cur.narrator)}</div></div>
+      <div class="score" id="detect-score">🏅 ${total(st)} / ${cur.questions.length*100}${BEST[cur.id]?` · рекорд ${BEST[cur.id]}`:''}</div></div>
+      <p style="margin:0">${cur.brief}</p><div class="goal">🎯 <b>Завдання:</b> ${cur.goal}</div>
+      ${cur.engine_note?`<p class="note" style="margin:8px 0 0">${cur.engine_note}</p>`:''}
+      <h3 style="margin:14px 0 0">Підозрювані</h3><div class="suspects">${cur.suspects.map(([id,n,role,say])=>`<div class="sus${done&&id===cur.culprit_id?' is-guilty':''}">${done?`<span class="stamp ${id===cur.culprit_id?'guilty':'clear'}">${id===cur.culprit_id?'ВИННИЙ':'чистий'}</span>`:''}<span class="who">${esc(n)}</span><span class="role">${esc(id)} · ${esc(role)}</span><div class="say">${esc(say)}</div></div>`).join('')}</div>`;}
   function drawSchema(){
     if(cur.engine==='redis'){$('#detect-schema-h').textContent='Ключі в Redis';
       $('#detect-schema').innerHTML=R.view().map(x=>`<div class="schema-t"><b data-ins="${esc(x.t==='hash'?'HGETALL '+x.k:x.t==='list'?'LRANGE '+x.k+' 0 -1':x.t==='set'?'SMEMBERS '+x.k:x.t==='zset'?'ZRANGE '+x.k+' 0 -1 WITHSCORES':'GET '+x.k)}">${esc(x.k)}</b> <span>${x.t.toUpperCase()}</span></div>`).join('')+'<p class="clock">Клік по ключу — команда в редактор. Будь-яку команду можна виконати; кілька — кожну з нового рядка.</p>';}
@@ -40,7 +53,10 @@
   $('#detect-schema').onclick=e=>{const b=e.target.closest('[data-ins]');if(b){$('#detect-ed').value=b.dataset.ins;$('#detect-ed').focus();}};
   function showQ(i){const st=ST[cur.id];st.q=i;const Q=cur.questions[i];
     $('#detect-dots').innerHTML='<span style="border:0;width:auto;background:none;cursor:default">Питання</span>'+cur.questions.map((_,k)=>`<span data-k="${k}" class="${st.solved.has(k)?'ok':''} ${k===i?'on':''} ${k>0&&!st.solved.has(k-1)&&!st.solved.has(k)?'lock':''}">${k+1}</span>`).join('');
-    $('#detect-q').innerHTML=`<b>Q${i+1}.</b> ${Q.q}`;
+    let exp='';if(cur.engine!=='redis'&&db){try{const w=runSql(Q.a);exp=`Очікуваний результат: колонки <code>${w.cols.map(esc).join('</code>, <code>')}</code> · ${w.rows.length} ${w.rows.length===1?'рядок':w.rows.length<5?'рядки':'рядків'}${Q.ordered?' · порядок важливий':''}`;}catch(e){}}
+    else exp='Одна команда Redis (можна кілька — кожну з нового рядка; перевіряється відповідь останньої). Розвідка: <code>KEYS *</code>.';
+    $('#detect-q').innerHTML=`<div class="story"><div class="bubble"><b class="nm">${esc(cur.narrator)} · крок ${i+1} з ${cur.questions.length}</b>${Q.story}</div></div>
+      <div class="task"><span class="lab">Q${i+1} · Запит</span>${Q.q}</div><p class="expect">${exp}</p>`;
     $('#detect-ed').value=st.ed[i]||(cur.engine==='redis'?'':'-- твій запит\n');$('#detect-ed').placeholder=cur.engine==='redis'?'команда Redis, напр. KEYS *':'SELECT …';
     $('#detect-hintbox').innerHTML='';$('#detect-verdict').innerHTML='';$('#detect-out').innerHTML='';
     $('#detect-notes').innerHTML=cur.questions.map((q,k)=>st.solved.has(k)?`<li>${q.clue}</li>`:'').join('')||'<li style="list-style:none;margin-left:-20px;color:var(--muted)">Поки порожньо: доказ з\'являється після правильної відповіді.</li>';
@@ -54,17 +70,22 @@
     else{let mine;try{const qq=q.replace(/^\s*--.*$/gm,'').trim();if(!qq){msg='Напиши запит.';}else{mine=runSql(qq);}}catch(e){msg='Помилка SQL: '+esc(e.message);}
       if(mine){$('#detect-out').innerHTML=table(mine);const want=runSql(Q.a);ok=same(mine,want,Q.ordered);
         if(!ok)msg=mine.rows.length!==want.rows.length?`Запит працює, але рядків ${mine.rows.length}, а має бути ${want.rows.length}.`:mine.rows.length&&mine.cols.length!==want.cols.length?`Рядків стільки, скільки треба, але колонок ${mine.cols.length}, а потрібно ${want.cols.length}.`:Q.ordered?'Майже: перевір значення і порядок рядків (<code>ORDER BY</code>).':'Майже: значення не збігаються. Перевір умови.';}}
+    if(ok&&!st.solved.has(i))st.pts[i]=qpts(i);
+    if(!ok)pen(i,'wrong',5);
     if(ok){st.solved.add(i);const last=i===cur.questions.length-1;
-      $('#detect-verdict').innerHTML=`<div class="v ok">✅ <b>Доказ знайдено.</b> ${Q.clue}${!last?` <button class="btn" id="detect-next" style="margin-left:8px">Наступне питання →</button>`:''}</div>`;
+      $('#detect-verdict').innerHTML=`<div class="v ok">✅ <b>Доказ знайдено (+${st.pts[i]}).</b> ${Q.clue}${!last?` <button class="btn" id="detect-next" style="margin-left:8px">Наступне питання →</button>`:''}</div>`;
       const nb=$('#detect-next');if(nb)nb.onclick=()=>showQ(i+1);
       $('#detect-st-'+cur.id).textContent=st.solved.size===cur.questions.length?'✓ розкрито':st.solved.size+'/'+cur.questions.length;
       const keep=$('#detect-verdict').innerHTML,out=$('#detect-out').innerHTML;showQ(i);$('#detect-ed').value=q;$('#detect-verdict').innerHTML=keep;$('#detect-out').innerHTML=out;const nb2=$('#detect-next');if(nb2)nb2.onclick=()=>showQ(i+1);if(last)final();}
-    else $('#detect-verdict').innerHTML=`<div class="v no">✗ ${msg}</div>`;
+    else $('#detect-verdict').innerHTML=`<div class="v no">✗ ${msg} <span class="clock">(−5)</span></div>`;
+    const sc=$('#detect-score');if(sc)sc.textContent=`🏅 ${total(st)} / ${cur.questions.length*100}${BEST[cur.id]?' · рекорд '+BEST[cur.id]:''}`;
     return ok;}
-  function final(){if($('#detect-final'))return;$('#detect-verdict').insertAdjacentHTML('beforeend',`<div class="verdict-final" id="detect-final">🕵️ <b>Справу розкрито.</b> ${cur.verdict}</div>`);}
+  function final(){if($('#detect-final'))return;const p=total(ST[cur.id]);if(!BEST[cur.id]||p>BEST[cur.id]){BEST[cur.id]=p;saveBest();}
+    $('#detect-st-'+cur.id).textContent='🏅 '+BEST[cur.id];drawBrief();
+    $('#detect-verdict').insertAdjacentHTML('beforeend',`<div class="verdict-final" id="detect-final">🕵️ <b>Справу розкрито.</b> ${cur.verdict}<div class="rankline">Твій результат: <b>${p}</b> з ${cur.questions.length*100} · звання <b>${rank(p)}</b></div></div>`);}
   $('#detect-run').onclick=check;
-  $('#detect-hint').onclick=()=>{$('#detect-hintbox').innerHTML=`<p class="note" style="margin:8px 0 0">💡 ${cur.questions[ST[cur.id].q].hint}</p>`;};
-  $('#detect-show').onclick=()=>{const a=cur.questions[ST[cur.id].q].a;$('#detect-ed').value=a;ST[cur.id].ed[ST[cur.id].q]=a;};
+  $('#detect-hint').onclick=()=>{if(!ST[cur.id].solved.has(ST[cur.id].q))pen(ST[cur.id].q,'hint',20);$('#detect-hintbox').innerHTML=`<p class="note" style="margin:8px 0 0">💡 ${cur.questions[ST[cur.id].q].hint}</p>`;};
+  $('#detect-show').onclick=()=>{if(!ST[cur.id].solved.has(ST[cur.id].q))pen(ST[cur.id].q,'show',50);const a=cur.questions[ST[cur.id].q].a;$('#detect-ed').value=a;ST[cur.id].ed[ST[cur.id].q]=a;};
   /* самоперевірка для browser_check.py: кожна еталонна відповідь має пройти */
   window.__detectSelfTest=async()=>{const out=[];for(const c of CASES){await openCase(c.id);if(c.engine!=='redis'&&!db){out.push(c.id+':no-engine');continue;}
     let n=0;for(let i=0;i<c.questions.length;i++){showQ(i);$('#detect-show').click();if(check())n++;}out.push(`${c.id}:${n}/${c.questions.length}${$('#detect-final')?'+verdict':''}`);}return out.join(' ');};

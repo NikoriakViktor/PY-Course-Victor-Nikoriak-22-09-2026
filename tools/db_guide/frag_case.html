@@ -2,15 +2,16 @@
 <section class="lesson" id="detect" data-title="Розслідування: знайди винного запитами">
   <h2>Розслідування: знайди винного запитами</h2>
   <p class="lead">Кожна справа — це база даних «Смачно + Таксі», в якій щось пішло не так. П'ять питань по черзі: на кожне відповідаєш <b>своїм запитом</b>, а перевіряється <b>результат</b>, а не текст запиту, тож правильних варіантів може бути кілька. Правильна відповідь відкриває доказ у записнику, а останнє питання називає винного. Застряг — «Підказка», а потім «Показати відповідь».</p>
+  <p class="note">🏅 <b>Очки:</b> за кожне питання до 100. Підказка −20, готова відповідь −50, кожна помилкова спроба −5. За справу до 500 очок і звання: 🥇 Шерлок (450+), 🥈 Детектив (350+), 🥉 Слідчий (200+), 🔎 Стажер. Найкращий результат запам'ятовується в браузері.</p>
   <div class="cases" id="detect-cases"></div>
   <div class="card" id="detect-brief"></div>
   <div class="grid" style="margin-top:20px">
     <div class="stack">
       <div class="card">
         <div class="dots" id="detect-dots"></div>
-        <div id="detect-q" style="font-size:16px;margin:8px 0 10px"></div>
+        <div id="detect-q"></div>
         <textarea id="detect-ed" class="ed" rows="7" spellcheck="false" aria-label="Твій запит"></textarea>
-        <div class="controls" style="margin:8px 0 0"><button class="btn primary" id="detect-run">▶ Виконати й перевірити</button><button class="btn" id="detect-hint">💡 Підказка</button><button class="btn" id="detect-show">Показати відповідь</button><span class="clock" id="detect-status"></span></div>
+        <div class="controls" style="margin:8px 0 0"><button class="btn primary" id="detect-run">▶ Виконати й перевірити</button><button class="btn" id="detect-hint">💡 Підказка (−20)</button><button class="btn" id="detect-show">Показати відповідь (−50)</button><span class="clock" id="detect-status"></span></div>
         <div id="detect-hintbox"></div>
         <div id="detect-verdict"></div>
         <div class="tablewrap" id="detect-out" style="margin-top:8px"></div>

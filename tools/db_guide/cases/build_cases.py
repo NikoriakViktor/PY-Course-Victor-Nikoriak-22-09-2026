@@ -250,7 +250,356 @@ CREATE TABLE deliveries (order_id INTEGER, courier_id TEXT, t_min INTEGER);
         "verdict": "<b>Оксана (c5)</b> підробляла GPS: телепортувалась до клієнта, щоб закрити доставку й набрати бонус. Усі три «доставки» припадають на стрибки. Чому це задача для DuckDB: треба пройти по всіх точках усіх кур'єрів і порівняти кожну з попередньою. Це важкий аналітичний запит по історії, і живу базу ним не навантажують.",
         "culprit": [["Оксана", 3]]}
 
-CASES = [case_borsch(), case_cash(), case_redis(), case_teleport()]
+
+# ---------------- справа 5: шматок піци ----------------
+def case_pizza():
+    rnd = random.Random(5)
+    schema = """CREATE TABLE couriers (id TEXT PRIMARY KEY, name TEXT NOT NULL, vehicle TEXT NOT NULL);
+CREATE TABLE orders (id INTEGER PRIMARY KEY, courier_id TEXT REFERENCES couriers(id), restaurant TEXT,
+                     created_at TEXT, delivered_at TEXT, minutes INTEGER);
+CREATE TABLE reviews (order_id INTEGER REFERENCES orders(id), stars INTEGER CHECK (stars BETWEEN 1 AND 5), text TEXT);
+CREATE TABLE stops (courier_id TEXT REFERENCES couriers(id), ts TEXT, place TEXT, minutes INTEGER);
+"""
+    data = inserts("couriers", ["id", "name", "vehicle"], COURIERS)
+    good = ["Все гаряче, дякую!", "Швидко і ввічливо", "Нормально", "Кур'єр молодець", "Трохи довго, але ок", "Супер, рекомендую"]
+    orders, reviews, stops = [], [], []
+    bad = {3006, 3013, 3020}
+    for i in range(28):
+        oid = 3000 + i + 1; c = COURIERS[i % 7][0]
+        if oid in bad: c = "c2"
+        elif c == "c2": c = "c4"
+        start = 18 * 60 + 12 * i
+        mins = rnd.randint(45, 52) if oid in bad else rnd.randint(18, 34)
+        orders.append((oid, c, "Піца Поділ", f"2026-11-22 {hm(start)}", f"2026-11-22 {hm(start + mins)}", mins))
+        if oid in bad:
+            reviews.append((oid, 1, rnd.choice(["Піца холодна, і бракує шматка!", "Бракує шматка піци, коробка м'ята", "Знову без одного шматка. Що за жарти?"])))
+            stops.append(("c2", f"2026-11-22 {hm(start + 15)}", "Парк Шевченка, лавка", rnd.randint(14, 18)))
+        elif rnd.random() < 0.6:
+            reviews.append((oid, rnd.randint(4, 5), rnd.choice(good)))
+        for _ in range(2):
+            stops.append((c, f"2026-11-22 {hm(start + rnd.randint(3, 15))}", rnd.choice(["світлофор", "ресторан: видача", "під'їзд клієнта", "АЗС"]), rnd.randint(1, 6)))
+    stops.append(("c5", "2026-11-22 19:40", "АЗС", 12))
+    reviews[2] = (reviews[2][0], 3, "Піца ціла, але холодна")
+    stops.sort(key=lambda r: r[1])
+    data += inserts("orders", ["id", "courier_id", "restaurant", "created_at", "delivered_at", "minutes"], orders)
+    data += inserts("reviews", ["order_id", "stars", "text"], reviews)
+    data += inserts("stops", ["courier_id", "ts", "place", "minutes"], stops)
+    return {
+        "id": "pizza", "engine": "sql", "store": "pg", "level": "🟢", "title": "Шматок піци",
+        "topics": "LIKE · IN · ORDER BY · вкладений SELECT",
+        "brief": "«Піца Поділ» отримує дивні відгуки: піца приїжджає холодна, а в коробці бракує шматка. Ресторан клянеться, що віддає піцу цілою. Між рестораном і клієнтом — лише кур'єр. Знайди, хто й де «обідає».",
+        "schema": schema, "data": data,
+        "questions": [
+            {"q": "Знайди відгуки, в яких є слово «шматк» (шматка, шматок…): <code>order_id</code>, <code>stars</code>, <code>text</code>.",
+             "a": "SELECT order_id, stars, text FROM reviews WHERE text LIKE '%шматк%';",
+             "hint": "<code>LIKE '%шматк%'</code> — «містить шматк» будь-де в тексті.", "ordered": False,
+             "clue": "Три скарги на шматок: замовлення 3006, 3013, 3020. «Просто холодна» не рахується."},
+            {"q": "Хто віз ці три замовлення і скільки хвилин? <code>id</code>, <code>courier_id</code>, <code>minutes</code>, за <code>id</code>.",
+             "a": "SELECT id, courier_id, minutes FROM orders\nWHERE id IN (3006, 3013, 3020)\nORDER BY id;",
+             "hint": "<code>WHERE id IN (…, …, …)</code> — коротше, ніж три <code>OR</code>.", "ordered": True,
+             "clue": "Усі три віз <b>c2</b>, і кожне їхало 45+ хв, а звичайно — 20–30."},
+            {"q": "Довгі зупинки: усі зупинки довші за 10 хв (<code>courier_id</code>, <code>ts</code>, <code>place</code>, <code>minutes</code>), від найдовшої.",
+             "a": "SELECT courier_id, ts, place, minutes FROM stops\nWHERE minutes > 10\nORDER BY minutes DESC;",
+             "hint": "Таблиця <code>stops</code>, <code>ORDER BY minutes DESC</code>.", "ordered": False,
+             "clue": "Три довгі зупинки c2 на <b>лавці в Парку Шевченка</b> і одна в c5 на АЗС (заправка, скарг немає)."},
+            {"q": "Зупинки c2 у парку: <code>ts</code>, <code>place</code>, <code>minutes</code>, за часом. Порівняй час із замовленнями.",
+             "a": "SELECT ts, place, minutes FROM stops\nWHERE courier_id = 'c2' AND place LIKE '%Парк%'\nORDER BY ts;",
+             "hint": "Дві умови: кур'єр і <code>place LIKE '%Парк%'</code>.", "ordered": True,
+             "clue": "Кожна зупинка в парку — рівно посеред одного з трьох «обскубаних» замовлень."},
+            {"q": "Назви підозрювану одним запитом: ім'я кур'єра, який віз замовлення з відгуків про «шматк». Підказка: вкладений <code>SELECT</code> в <code>IN (…)</code>.",
+             "a": "SELECT name FROM couriers\nWHERE id IN (SELECT courier_id FROM orders\n             WHERE id IN (SELECT order_id FROM reviews WHERE text LIKE '%шматк%'));",
+             "hint": "Зсередини назовні: відгуки → id замовлень → courier_id → ім'я.", "ordered": False,
+             "clue": "Це <b>Марія</b>."}],
+        "verdict": "<b>Марія (c2)</b> зупинялась на лавці в парку й пригощалась шматком піци. Звідси і холодна піца: 15 хв на лавці. Як систему зробити чеснішою: пломба-наліпка на коробці й автоматичне сповіщення, якщо зупинка під час доставки довша за 10 хв.",
+        "culprit": [["Марія"]]}
+
+# ---------------- справа 6: накручений рейтинг ----------------
+def case_rating():
+    rnd = random.Random(6)
+    PH = "+380671112233"
+    schema = """CREATE TABLE couriers (id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL);
+CREATE TABLE customers (id TEXT PRIMARY KEY, phone TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE ratings (order_id INTEGER, courier_id TEXT REFERENCES couriers(id),
+                      customer_id TEXT REFERENCES customers(id), stars INTEGER CHECK (stars BETWEEN 1 AND 5), ts TEXT);
+"""
+    cour = [(c, n, PH if c == "c1" else f"+38050{rnd.randint(1000000, 9999999)}") for c, n, _ in COURIERS]
+    data = inserts("couriers", ["id", "name", "phone"], cour)
+    cust = [(f"client-{i}", f"+38063{rnd.randint(1000000, 9999999)}", f"2026-{rnd.randint(1, 10):02d}-{rnd.randint(1, 28):02d}") for i in range(1, 61)]
+    fakes = [(f"client-{i}", PH, "2026-11-25") for i in range(201, 210)]
+    data += inserts("customers", ["id", "phone", "created_at"], cust + fakes)
+    rat, oid = [], 4000
+    for c, _, _ in COURIERS:
+        for _ in range(14 if c != "c1" else 12):
+            oid += 1
+            st = rnd.choice([3, 4, 4, 4, 5]) if c != "c1" else rnd.choice([3, 3, 4, 4, 4])
+            rat.append((oid, c, rnd.choice(cust)[0], st, f"2026-11-{rnd.randint(1, 27):02d}"))
+    for f_ in fakes:
+        oid += 1; rat.append((oid, "c1", f_[0], 5, "2026-11-26"))
+    rat.sort(key=lambda r: r[0])
+    data += inserts("ratings", ["order_id", "courier_id", "customer_id", "stars", "ts"], rat)
+    return {
+        "id": "rating", "engine": "sql", "store": "pg", "level": "🟡", "title": "Накручений рейтинг",
+        "topics": "AVG · GROUP BY · HAVING · JOIN · підзапит",
+        "brief": "Кур'єр місяця отримує премію 3000 грн — у кого найвищий середній рейтинг. Цього місяця лідер несподівано вирвався вперед за останні два дні. Служба підтримки підозрює накрутку. Знайди, звідки взялися п'ятірки.",
+        "schema": schema, "data": data,
+        "questions": [
+            {"q": "Середній рейтинг кожного кур'єра (округли до 2 знаків) і кількість оцінок: <code>courier_id</code>, <code>avg</code>, <code>n</code>.",
+             "a": "SELECT courier_id, ROUND(AVG(stars), 2) AS avg, COUNT(*) AS n\nFROM ratings\nGROUP BY courier_id\nORDER BY avg DESC;",
+             "hint": "<code>AVG(stars)</code>, <code>ROUND(…, 2)</code>, <code>GROUP BY courier_id</code>.", "ordered": False,
+             "clue": "Лідер — <b>c1</b>, і в нього найбільше оцінок."},
+            {"q": "Хто ставив оцінки c1 з акаунтів, створених не раніше 25 листопада? <code>customer_id</code>, <code>created_at</code>, <code>stars</code>.",
+             "a": "SELECT r.customer_id, c.created_at, r.stars\nFROM ratings AS r\nJOIN customers AS c ON c.id = r.customer_id\nWHERE r.courier_id = 'c1' AND c.created_at >= '2026-11-25';",
+             "hint": "<code>JOIN customers</code> за <code>customer_id</code>, потім дві умови.", "ordered": False,
+             "clue": "Дев'ять свіжих акаунтів, створених одного дня, — і всі поставили c1 п'ятірку."},
+            {"q": "Чи є телефони, на які зареєстровано більше одного акаунта? <code>phone</code> і кількість акаунтів.",
+             "a": "SELECT phone, COUNT(*) AS accounts\nFROM customers\nGROUP BY phone\nHAVING COUNT(*) > 1;",
+             "hint": "<code>GROUP BY phone</code> + <code>HAVING COUNT(*) &gt; 1</code>.", "ordered": False,
+             "clue": f"Один номер — <b>{PH}</b> — має 9 акаунтів."},
+            {"q": "Чесний рейтинг c1: середня оцінка (2 знаки) <b>без</b> оцінок з акаунтів на телефоні, де акаунтів більше одного.",
+             "a": "SELECT ROUND(AVG(r.stars), 2) AS honest_avg\nFROM ratings AS r\nJOIN customers AS c ON c.id = r.customer_id\nWHERE r.courier_id = 'c1'\n  AND c.phone NOT IN (SELECT phone FROM customers GROUP BY phone HAVING COUNT(*) > 1);",
+             "hint": "Попередній запит стає підзапитом у <code>NOT IN (…)</code>.", "ordered": False,
+             "clue": "Без накрутки c1 опускається в самий низ рейтингу."},
+            {"q": "Чий це телефон? Ім'я кур'єра, чий <code>phone</code> збігається з телефоном «багатоакаунтника».",
+             "a": "SELECT name FROM couriers\nWHERE phone IN (SELECT phone FROM customers GROUP BY phone HAVING COUNT(*) > 1);",
+             "hint": "Знову підзапит із запитання 3, тепер у таблиці <code>couriers</code>.", "ordered": False,
+             "clue": "Це <b>Олег</b>."}],
+        "verdict": "<b>Олег (c1)</b> зареєстрував 9 акаунтів на свій номер і сам поставив собі п'ятірки. Що виправити: один телефон — один акаунт (<code>UNIQUE (phone)</code> у таблиці <code>customers</code>), і оцінку може поставити лише той, хто справді отримав замовлення.",
+        "culprit": [["Олег"]]}
+
+# ---------------- справа 7: Redis, нічний стрибок ----------------
+def case_redis_lb():
+    setup = ["ZADD lb:couriers:deliveries 14 c1 12 c2 9 c3 61 c4 13 c5",
+             "HSET courier:c1 name Олег deliveries_today 14 status free", "HSET courier:c2 name Марія deliveries_today 12 status busy",
+             "HSET courier:c3 name Андрій deliveries_today 9 status free", "HSET courier:c4 name Тарас deliveries_today 11 status busy",
+             "HSET courier:c5 name Оксана deliveries_today 13 status free",
+             "HSET client:dispatcher owner system role service", "HSET client:simulator owner system role service",
+             "HSET client:dashboard-dev owner c4 role стажер-розробник created 2026-11-27 note тестовий-скрипт",
+             'LPUSH monitor:log "02:58:10 [dashboard-dev] CLIENT SETNAME dashboard-dev"',
+             'LPUSH monitor:log "03:12:44 [dashboard-dev] ZINCRBY lb:couriers:deliveries 50 c4"',
+             'LPUSH monitor:log "03:12:45 [dashboard-dev] ZREVRANGE lb:couriers:deliveries 0 2 WITHSCORES"',
+             'LPUSH monitor:log "08:01:03 [simulator] ZINCRBY lb:couriers:deliveries 1 c1"',
+             'LPUSH monitor:log "08:20:41 [simulator] ZINCRBY lb:couriers:deliveries 1 c4"',
+             'LPUSH monitor:log "08:31:17 [simulator] ZINCRBY lb:couriers:deliveries 1 c5"']
+    return {
+        "id": "redis-lb", "engine": "redis", "store": "rd", "level": "⚡", "title": "Нічний стрибок у рейтингу",
+        "topics": "ZREVRANGE · ZSCORE · HGET · LRANGE · HGETALL",
+        "brief": "Ранок. На дашборді диспетчерської рейтинг кур'єрів за доставками, і там дивина: хтось за ніч обійшов усіх на 50 доставок. Але вночі служба не працює. Рейтинг — це <code>ZSET</code> у Redis. Знайди, хто й як його змінив.",
+        "setup": setup,
+        "questions": [
+            {"q": "Подивись топ-3 рейтингу разом з балами.", "a": "ZREVRANGE lb:couriers:deliveries 0 2 WITHSCORES", "need": ["c4", "61"],
+             "hint": "Від більшого до меншого — <code>ZREVRANGE &lt;ключ&gt; 0 2 WITHSCORES</code>.",
+             "clue": "Перший — <b>c4</b> з <b>61</b> доставкою. Другий — 14."},
+            {"q": "Скільки доставок c4 насправді зробив сьогодні? Поле в його картці.", "a": "HGET courier:c4 deliveries_today", "need": ["11"],
+             "hint": "Картка кур'єра — <code>courier:c4</code>, поле <code>deliveries_today</code>.",
+             "clue": "Насправді <b>11</b>. Рейтинг каже 61: різниця — рівно 50."},
+            {"q": "Хто змінював рейтинг? Прочитай увесь журнал команд <code>monitor:log</code>.", "a": "LRANGE monitor:log 0 -1", "need": ["ZINCRBY lb:couriers:deliveries 50 c4", "dashboard-dev"],
+             "hint": "LIST: <code>LRANGE monitor:log 0 -1</code>. Шукай команду, яка додає 50.",
+             "clue": "О 03:12 клієнт <b>dashboard-dev</b> виконав <code>ZINCRBY … 50 c4</code>. Сервіси додають лише по 1."},
+            {"q": "Що це за клієнт <code>dashboard-dev</code>? Подивись його картку.", "a": "HGETALL client:dashboard-dev", "need": ["c4", "стажер"],
+             "hint": "Ключ — <code>client:dashboard-dev</code>.",
+             "clue": "Його власник — <b>c4</b>, стажер-розробник дашборду."},
+            {"q": "Як звати кур'єра c4?", "a": "HGET courier:c4 name", "need": ["Тарас"],
+             "hint": "Поле <code>name</code> у картці <code>courier:c4</code>.", "clue": "Це <b>Тарас</b>."}],
+        "verdict": "<b>Тарас (c4)</b> підробляє стажером на дашборді й уночі тестовим скриптом додав собі 50 доставок. Два уроки. 1) Рейтинг у Redis — лише <b>копія</b>: правда — це доставлені замовлення в PostgreSQL, тож рейтинг можна перерахувати (<code>SELECT courier_id, COUNT(*) FROM orders GROUP BY courier_id</code>). 2) Не давай усім клієнтам права на запис: у Redis є користувачі й ACL (<code>ACL SETUSER dashboard … +@read</code>), а дашборду досить читати.",
+    }
+
+# ---------------- справа 8: Redis, застрягле замовлення ----------------
+def case_redis_stuck():
+    I = lambda n: f"1700000000000-{n}"
+    setup = ["XGROUP CREATE orders:new dispatchers 0 MKSTREAM"] + [f"XADD orders:new {I(i)} order_id {88 + i}" for i in range(4)] + [
+        "XREADGROUP GROUP dispatchers d1 COUNT 2 STREAMS orders:new >", f"XACK orders:new dispatchers {I(0)} {I(1)}",
+        "XREADGROUP GROUP dispatchers d3 COUNT 1 STREAMS orders:new >",
+        "XREADGROUP GROUP dispatchers d2 COUNT 1 STREAMS orders:new >", f"XACK orders:new dispatchers {I(3)}",
+        "HSET order:88 status delivered courier_id c1", "HSET order:89 status picked_up courier_id c5",
+        "HSET order:90 customer client-77 status new created 21:41", "HSET order:91 status assigned courier_id c2",
+        "SADD dispatchers:alive d1 d2",
+        'LPUSH events:log "21:40:02 d3: старт (тестовий запуск з ноутбука розробника)"',
+        'LPUSH events:log "21:41:15 d3: XREADGROUP → взяв #90"',
+        'LPUSH events:log "21:41:16 d3: Killed — ноутбук закрили, процес зник"',
+        'LPUSH events:log "21:41:20 d2: XREADGROUP → взяв #91, XACK"']
+    return {
+        "id": "redis-stuck", "engine": "redis", "store": "rd", "level": "⚡", "title": "Замовлення-привид",
+        "topics": "Stream: XPENDING · XREADGROUP 0 · SMEMBERS · LRANGE",
+        "brief": "Клієнт <code>client-77</code> замовив о 21:41. Зараз 22:05, і замовлення №90 досі «нове»: кур'єра не шукали. Інші замовлення, і раніші, і пізніші, давно в дорозі. Черга — Redis Stream <code>orders:new</code> з групою <code>dispatchers</code>. Знайди, де застрягло замовлення, і витягни його.",
+        "setup": setup,
+        "questions": [
+            {"q": "Подивись картку замовлення 90.", "a": "HGETALL order:90", "need": ["new"],
+             "hint": "<code>HGETALL order:90</code>.", "clue": "Статус <b>new</b> уже 24 хв: диспетчер його так і не обробив."},
+            {"q": "Чи є в групі <code>dispatchers</code> видані, але не підтверджені повідомлення? І за ким вони?", "a": "XPENDING orders:new dispatchers", "need": ["d3"],
+             "hint": "<code>XPENDING &lt;stream&gt; &lt;group&gt;</code> — скільки непідтверджених і за якими споживачами.",
+             "clue": "Одне повідомлення висить за споживачем <b>d3</b>."},
+            {"q": "Які диспетчери зараз живі?", "a": "SMEMBERS dispatchers:alive", "need": ["d1", "d2"],
+             "hint": "Множина <code>dispatchers:alive</code>.",
+             "clue": "Живі лише <b>d1</b> і <b>d2</b>. d3 немає."},
+            {"q": "Що сталося з d3? Прочитай журнал подій.", "a": "LRANGE events:log 0 -1", "need": ["Killed"],
+             "hint": "<code>LRANGE events:log 0 -1</code>.",
+             "clue": "d3 — тестовий запуск з ноутбука: узяв #90 і зник, не надіславши XACK. Stream не загубив замовлення, але d3 уже не повернеться, щоб його доробити."},
+            {"q": "Врятуй замовлення: прочитай повідомлення, що висять за d3 (від імені d3, з id <code>0</code>).", "a": "XREADGROUP GROUP dispatchers d3 STREAMS orders:new 0", "need": ["90"],
+             "hint": "З id <code>0</code> споживач отримує <b>свої</b> непідтверджені: <code>XREADGROUP GROUP dispatchers d3 STREAMS orders:new 0</code>.",
+             "clue": "Ось воно: <b>order_id 90</b>. Тепер його можна обробити й підтвердити XACK."}],
+        "verdict": "Винний — <b>тестовий диспетчер d3</b>: його запустили з ноутбука в робочу групу, він узяв замовлення й зник. Stream зберіг повідомлення в pending: саме тому замовлення не загубилось. Але наш <code>dispatcher.run()</code> перечитує лише <b>свої</b> pending. У справжній системі живі диспетчери забирають чужі завислі повідомлення командою <code>XAUTOCLAIM orders:new dispatchers d1 60000 0</code> («усе, що висить понад 60 с»). Це задача 🔴 з роадмапу. А тестові запуски — лише в окремій групі або на окремому Redis.",
+    }
+
+# ---------------- справа 9: DuckDB, без перерви ----------------
+def case_nobreak():
+    rnd = random.Random(9)
+    schema = """CREATE TABLE couriers (id TEXT PRIMARY KEY, name TEXT NOT NULL, vehicle TEXT NOT NULL);
+CREATE TABLE pings (courier_id TEXT, t_min INTEGER, ts TEXT);   -- додаток онлайн; t_min — хвилина від 00:00
+"""
+    data = inserts("couriers", ["id", "name", "vehicle"], COURIERS)
+    plan = {"c1": [(6 * 60, 17 * 60 + 30)], "c2": [(8 * 60, 12 * 60), (13 * 60, 17 * 60)], "c3": [(10 * 60, 14 * 60), (14 * 60 + 45, 19 * 60)],
+            "c4": [(7 * 60, 11 * 60 + 30), (12 * 60 + 15, 15 * 60)], "c5": [(12 * 60, 16 * 60), (16 * 60 + 40, 21 * 60)],
+            "c6": [(6 * 60, 11 * 60), (12 * 60, 17 * 60 + 30)], "c7": [(9 * 60, 13 * 60 + 30)]}
+    pings = []
+    for c, sess in plan.items():
+        for a, b in sess:
+            t = a
+            while t <= b:
+                pings.append((c, t, hm(t)))
+                t += rnd.choice([5, 5, 5, 5, 10, 15]) if c in ("c1", "c6") else rnd.choice([5, 5, 5, 10])
+    pings.sort(key=lambda r: (r[1], r[0]))
+    data += inserts("pings", ["courier_id", "t_min", "ts"], pings)
+    G = """WITH g AS (
+  SELECT courier_id, t_min, ts,
+         t_min - LAG(t_min) OVER (PARTITION BY courier_id ORDER BY t_min) AS gap
+  FROM pings
+), s AS (
+  SELECT *, SUM(CASE WHEN gap IS NULL OR gap >= 30 THEN 1 ELSE 0 END)
+              OVER (PARTITION BY courier_id ORDER BY t_min) AS session
+  FROM g
+), runs AS (
+  SELECT courier_id, session, MIN(ts) AS start, MAX(ts) AS finish, MAX(t_min) - MIN(t_min) AS minutes
+  FROM s GROUP BY courier_id, session
+)"""
+    return {
+        "id": "nobreak", "engine": "sql", "store": "dk", "level": "🔴", "title": "Без перерви",
+        "topics": "gaps & islands: LAG · CASE · SUM() OVER · WITH",
+        "brief": "Правило безпеки служби: не більше <b>8 годин підряд</b> без перерви щонайменше 30 хв. Після вчорашньої аварії (кур'єр заснув на світлофорі, усі цілі) треба перевірити вивантаження пінгів додатка за день: поки кур'єр онлайн, додаток пінгує кожні 5–15 хв. Хто порушив правило?",
+        "engine_note": "Запити виконує SQLite у браузері; у DuckDB вони пишуться так само, тільки <code>FROM 'pings.parquet'</code>. Це класична задача «gaps and islands»: розірви ряд там, де пауза ≥ 30 хв, і поміряй кожен шматок.",
+        "schema": schema, "data": data,
+        "questions": [
+            {"q": "Скільки хвилин кожен був онлайн «по годиннику»: від першого до останнього пінгу (<code>courier_id</code>, <code>first</code>, <code>last</code>, <code>span</code>), від найбільшого <code>span</code>.",
+             "a": "SELECT courier_id, MIN(ts) AS first, MAX(ts) AS last, MAX(t_min) - MIN(t_min) AS span\nFROM pings\nGROUP BY courier_id\nORDER BY span DESC;",
+             "hint": "<code>MAX(t_min) - MIN(t_min)</code> по кожному кур'єру.", "ordered": False,
+             "clue": "Найдовші дні в <b>c6</b> і <b>c1</b> — по 11,5 год. Але чи були перерви?"},
+            {"q": "Паузи між пінгами c1, довші за 5 хв: <code>ts</code> і <code>gap</code> (хв від попереднього пінгу), за часом.",
+             "a": "SELECT ts, gap FROM (\n  SELECT ts, t_min, t_min - LAG(t_min) OVER (ORDER BY t_min) AS gap\n  FROM pings WHERE courier_id = 'c1'\n) WHERE gap > 5\nORDER BY t_min;",
+             "hint": "<code>t_min - LAG(t_min) OVER (ORDER BY t_min)</code>; фільтр по вікну — лише зовні, у підзапиті.", "ordered": True,
+             "clue": "У c1 найдовша пауза — 15 хв. Перерви ≥ 30 хв немає жодної."},
+            {"q": "Скільки справжніх перерв (пауза ≥ 30 хв) у кожного кур'єра? <code>courier_id</code>, <code>breaks</code>.",
+             "a": "SELECT courier_id, SUM(CASE WHEN gap >= 30 THEN 1 ELSE 0 END) AS breaks\nFROM (\n  SELECT courier_id, t_min - LAG(t_min) OVER (PARTITION BY courier_id ORDER BY t_min) AS gap\n  FROM pings\n)\nGROUP BY courier_id;",
+             "hint": "<code>PARTITION BY courier_id</code> у LAG, а потім <code>SUM(CASE WHEN gap &gt;= 30 THEN 1 ELSE 0 END)</code>.", "ordered": False,
+             "clue": "У c6 перерва є (обід о 11:00), у c7 зміна коротка, а в <b>c1</b> — <b>0 перерв</b>."},
+            {"q": "Найдовша безперервна робота кожного кур'єра: розріж пінги на «сесії» (нова сесія — коли пауза ≥ 30 хв або перший пінг), поміряй кожну й візьми максимум. <code>courier_id</code>, <code>longest</code> (хв), від найбільшого.",
+             "a": G + "\nSELECT courier_id, MAX(minutes) AS longest\nFROM runs\nGROUP BY courier_id\nORDER BY longest DESC;",
+             "hint": "Номер сесії = накопичувальна сума «тут почалась нова»: <code>SUM(CASE …) OVER (PARTITION BY courier_id ORDER BY t_min)</code>. Далі <code>GROUP BY courier_id, session</code>.", "ordered": True,
+             "clue": "c1 — <b>690 хв</b> (11,5 год) без перерви. Решта — не більше 5,5 год."},
+            {"q": "Протокол: ім'я, початок, кінець і тривалість кожної сесії довшої за 8 год (480 хв).",
+             "a": G + "\nSELECT c.name, r.start, r.finish, r.minutes\nFROM runs AS r JOIN couriers AS c ON c.id = r.courier_id\nWHERE r.minutes > 480;",
+             "hint": "Той самий <code>WITH</code>, потім <code>JOIN couriers</code> і <code>WHERE minutes &gt; 480</code>.", "ordered": False,
+             "clue": "Порушення одне."}],
+        "verdict": "<b>Олег (c1)</b> працював з 06:00 до 17:30 без перерви — 11,5 год. У Богдана (c6) день такий самий довгий, але з обідньою годиною, і це за правилами. Саме тому рахують не «скільки годин онлайн», а <b>найдовший безперервний шматок</b>. Це задача для аналітики по історії: рахується раз на день по вивантаженню, а не на живій базі.",
+        "culprit": [["Олег", "06:00", "17:30", 690]]}
+
+CASES = [case_borsch(), case_pizza(), case_cash(), case_rating(), case_redis(), case_redis_lb(), case_redis_stuck(), case_teleport(), case_nobreak()]
+
+# ---------------- ігровий шар: оповідач, підозрювані, історія кожного кроку ----------------
+EXTRA = {
+ "borsch": dict(place="Печерськ, Київ", time="14 листопада, 21:12–21:40", narrator="🕵️ Слідча Ліна Гордієнко",
+   goal="Довести, хто насправді закрив замовлення №1042, і назвати ім'я.", culprit_id="c7",
+   suspects=[["c4", "Тарас", "скутер", "«Я був на Оболоні, возив суші. Борщу в очі не бачив!»"],
+             ["c7", "Ірина", "скутер", "«Того вечора я каталась по Подолу. На Печерськ не заїжджала»."],
+             ["c2", "Марія", "скутер", "«Я возила свої замовлення з Голосієва. Чуже мені не треба»."]],
+   stories=["Почнемо з паперів. Що каже система про саме замовлення: хто віз, куди, о котрій «доставлено»? Не вір нікому, вір рядку в таблиці.",
+            "Тарас каже, що був на Оболоні. Добре, перевіримо. Додаток кур'єра пінгує GPS кожні 5 хв — таблиця <code>gps</code>. Нас цікавить проміжок навколо «доставки»: 21:30–21:50.",
+            "Якщо Тарас чистий, то хто був поруч із клієнткою? Хтось мусив бути на Печерську саме тоді.",
+            "Кожне натискання кнопки в додатку лишає слід у <code>status_log</code>: що натиснули, коли і з якого пристрою. Цікавлять лише телефони кур'єрів — пристрої <code>phone-…</code>.",
+            "Пристрій знайдено. Лишилось назвати людину: кому належить цей телефон?"]),
+ "pizza": dict(place="«Піца Поділ» → клієнти Подолу", time="22 листопада, вечір", narrator="👨‍🍳 Шеф «Піци Поділ» Марко",
+   goal="Знайти, хто «пробує» піцу дорогою, і де він це робить.", culprit_id="c2",
+   suspects=[["c2", "Марія", "скутер", "«Затори, світлофори, ви ж знаєте вечірній Поділ»."],
+             ["c5", "Оксана", "скутер", "«Я заправлялась один раз. Скарг на мене немає»."],
+             ["c4", "Тарас", "скутер", "«Я возив піцу весь вечір, і все було ціле»."]],
+   stories=["Я віддаю піцу цілою, присягаюсь! Почитай, що пишуть клієнти. Мене цікавлять скарги саме на «шматок», не на «холодну».",
+            "Три скарги. Хто віз ці замовлення і скільки вони їхали? Звичайна доставка в нас — 20–30 хв.",
+            "Сорок п'ять хвилин на дорогу в 3 км? Додаток пише всі зупинки кур'єрів (<code>stops</code>). Подивись, хто стояв довше за 10 хвилин.",
+            "Одна людина стояла довго тричі, і щоразу в тому самому місці. Склади протокол цих зупинок за часом і зістав із часом замовлень.",
+            "Час збігається. Оформимо одним запитом, щоб і бухгалтерія зрозуміла: від скарг до імені кур'єра."]),
+ "cash": dict(place="Каса служби доставки", time="20 листопада, кінець дня", narrator="🧮 Бухгалтерка Ніна Петрівна",
+   goal="Знайти, хто взяв гроші, і відрізнити крадіжку від помилки з рештою.", culprit_id="c6",
+   suspects=[["c6", "Богдан", "велосипед", "«Я все здав. Мабуть, каса помилилась»."],
+             ["c3", "Андрій", "авто", "«Решти в мене не було, клієнт махнув рукою: не треба»."],
+             ["c1", "Олег", "велосипед", "«У мене все до копійки, перевіряйте»."]],
+   stories=["Каса не б'ється, а я не люблю, коли не б'ється. Спершу простий облік: скільки готівкових замовлень було в кожного?",
+            "Тепер найпростіший вид нестачі: гроші взяли, а в касу не здали зовсім. Таке замовлення є в <code>orders</code>, але не має пари в <code>cash_handover</code>.",
+            "Буває й інакше: здав, але менше. Таке теж треба знайти — тут уже звичайний JOIN.",
+            "Зведемо все разом: нестача по кожному кур'єру. Тих, у кого все чисто, не показуй.",
+            "Мені потрібен документ для директора: ім'я, сума і висновок, крадіжка це чи похибка. Поріг — 100 грн."]),
+ "rating": dict(place="Відділ якості", time="кінець листопада", narrator="⭐ Менеджерка якості Аліна",
+   goal="З'ясувати, чи чесний рейтинг лідера, і хто накрутив оцінки.", culprit_id="c1",
+   suspects=[["c1", "Олег", "велосипед", "«Мене просто люблять клієнти. Я ввічливий»."],
+             ["c7", "Ірина", "скутер", "«У мене чесна четвірка з плюсом. Перевіряйте»."],
+             ["c4", "Тарас", "скутер", "«Рейтинг? Я про нього навіть не думаю»."]],
+   stories=["Премія — 3000 грн, тож усе має бути чисто. Покажи середній рейтинг кожного кур'єра і скільки в нього оцінок.",
+            "У лідера оцінок більше, ніж у всіх. Хто ці щедрі клієнти? Мене насторожують нові акаунти, створені з 25 листопада.",
+            "Дев'ять нових акаунтів за день — дивно. Подивимось, на які телефони реєструють акаунти: чи нема номера, на якому їх кілька?",
+            "Перерахуй рейтинг лідера чесно: без оцінок з того «багатоакаунтного» телефона.",
+            "Лишилось головне: чий це номер? Телефони кур'єрів є в їхній таблиці."]),
+ "redis": dict(place="Redis диспетчерської", time="21:02 → 21:30", narrator="📞 Диспетчерка Леся",
+   goal="Знайти, чому кур'єра «віддали» двом замовленням одночасно.", culprit_id="d2",
+   suspects=[["d1", "диспетчер d1", "версія 2.3", "«Я беру кур'єра через SREM. Взяв — значить, мій»."],
+             ["d2", "диспетчер d2", "версія 1.0", "«Я перевірив: кур'єр був вільний!»"],
+             ["c3", "Андрій", "кур'єр", "«Мені прийшло #81, я на нього і поїхав. Про #77 нічого не знаю»."]],
+   stories=["Клієнт кричить у трубку: кур'єр «призначений», але не їде. Подивись, що в Redis написано про замовлення 77.",
+            "Кур'єр c3. А що він сам каже про себе — тобто що в його картці?",
+            "Він везе інше замовлення. Хто його туди призначив?",
+            "Два диспетчери, один кур'єр. Мені потрібна хронологія: усе, що вони робили, пишеться в <code>events:log</code>.",
+            "d1 і d2 поводяться по-різному. Подивимось, що це за диспетчер d2 і яка в нього версія."]),
+ "redis-lb": dict(place="Дашборд диспетчерської", time="ніч 27→28 листопада", narrator="📊 Керівниця зміни Олена",
+   goal="Знайти, хто й як змінив рейтинг уночі.", culprit_id="c4",
+   suspects=[["c4", "Тарас", "кур'єр + стажер", "«Я вночі сплю! І рейтинг мені не потрібен»."],
+             ["c1", "Олег", "кур'єр", "«Я другий у рейтингу. Мені невигідно когось піднімати»."],
+             ["simulator", "сервіс simulator", "система", "«Я додаю рівно 1 за кожну доставку»."]],
+   stories=["Відкриваю дашборд, а там диво: хтось за ніч обійшов усіх. Покажи топ-3 рейтингу з балами.",
+            "61 доставка до ранку? Перевір, скільки доставок записано в картці самого кур'єра.",
+            "Різниця рівно 50. Хтось змінив рейтинг напряму. Наш Redis пише журнал команд у <code>monitor:log</code>. Шукай ZINCRBY, який додає не 1.",
+            "Клієнт з іменем <code>dashboard-dev</code>? Сервісу з такою назвою в нас немає. Подивись, чий він.",
+            "Власник — c4. Як його звати, щоб я знала, з ким говорити?"]),
+ "redis-stuck": dict(place="Черга orders:new", time="21:41 → 22:05", narrator="📞 Диспетчерка Леся",
+   goal="Знайти, де застрягло замовлення №90, і витягти його з черги.", culprit_id="d3",
+   suspects=[["d1", "диспетчер d1", "живий", "«Я взяв 88 і 89, усе підтвердив»."],
+             ["d2", "диспетчер d2", "живий", "«Я взяв 91 і підтвердив»."],
+             ["d3", "диспетчер d3", "???", "(не відповідає)"]],
+   stories=["Клієнт чекає 24 хвилини, а кур'єра навіть не шукали. Подивись картку замовлення 90.",
+            "Замовлення в черзі є, але «нове». Може, хтось його взяв і не підтвердив? Stream пам'ятає, що кому видано.",
+            "Висить за споживачем d3. А d3 у нас взагалі працює? Живі диспетчери відмічаються в множині <code>dispatchers:alive</code>.",
+            "d3 серед живих немає. Що з ним сталося? Подивись журнал.",
+            "Зрозуміло. Замовлення не загублене: Stream тримає його за d3. Витягни його — прочитай від імені d3 його непідтверджені повідомлення."]),
+ "teleport": dict(place="Аналітика: GPS за ранок", time="ранок, 09:00–11:00", narrator="📈 Аналітик Денис",
+   goal="Знайти, хто підробляв GPS, щоб набрати бонус.", culprit_id="c5",
+   suspects=[["c5", "Оксана", "скутер", "«Я просто швидко їжджу і знаю короткі шляхи»."],
+             ["c2", "Марія", "скутер", "«Мій скутер розганяється до 50. Буває, лечу»."],
+             ["c7", "Ірина", "скутер", "«У мене сьоме місце. Мене точно не підозрюйте»."]],
+   stories=["Бонус отримує лідер за доставками. Почнемо з таблиці лідерів: скільки доставок у кожного і хто на якому місці.",
+            "Лідер з великим відривом. Подивимось на його трек. Щоб рахувати переміщення, кожній точці потрібна попередня — це робить <code>LAG</code>.",
+            "Тепер швидкість. Відстань по кварталах: |Δx| + |Δy| км за різницю хвилин. Порахуй для всіх кур'єрів і подивись максимум.",
+            "300+ км/год на скутері? Знайди всі такі «телепорти»: де, коли і в кого.",
+            "Останній доказ: якщо телепорт — шахрайство, то в ту ж хвилину має бути «доставка». Зістав стрибки з доставками."]),
+ "nobreak": dict(place="Відділ безпеки", time="вчора, 06:00–21:00", narrator="🦺 Інженерка з безпеки Галина",
+   goal="Знайти, хто працював понад 8 годин без перерви.", culprit_id="c1",
+   suspects=[["c1", "Олег", "велосипед", "«Я відпочивав на світлофорах, чесно»."],
+             ["c6", "Богдан", "велосипед", "«День був довгий, але я обідав годину»."],
+             ["c5", "Оксана", "скутер", "«Я почала опівдні, до 21:00 — це ж менше 8 годин підряд?»"]],
+   stories=["Після аварії мені потрібна правда про вчорашній день. Спершу грубо: хто скільки був онлайн від першого до останнього пінгу.",
+            "Двоє з однаковим днем. Довгий день — ще не порушення, порушення — це немає перерви. Подивимось на паузи Олега між пінгами.",
+            "Перерва — це пауза від 30 хвилин. Порахуй, скільки справжніх перерв було в кожного.",
+            "Тепер точно: розріж день кожного на безперервні шматки там, де була перерва, і знайди найдовший шматок.",
+            "Мені потрібен протокол: хто, з котрої до котрої і скільки хвилин без перерви — лише ті, де понад 8 годин."]),
+}
+for c in CASES:
+    e = EXTRA[c["id"]]
+    for q, s in zip(c["questions"], e.pop("stories")): q["story"] = s
+    c.update(e)
 
 def run_sql(c, q):
     con = sqlite3.connect(":memory:"); con.executescript(c["schema"] + c["data"])

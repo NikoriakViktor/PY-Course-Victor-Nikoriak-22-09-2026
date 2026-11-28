@@ -18,3 +18,21 @@ textarea.ed{width:100%;box-sizing:border-box;font:14px/1.5 var(--mono);padding:1
 #detect-out pre{margin:0}
 .schema-t{margin-bottom:8px}.schema-t b{font-family:var(--mono);cursor:pointer;color:var(--pg)}.schema-t span{font-family:var(--mono);color:var(--muted)}
 .verdict-final{margin-top:12px;padding:14px 16px;border-radius:12px;border:2px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--panel));font-size:15.5px}
+.casehead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.casehead .meta{color:var(--muted);font-size:13.5px;margin:2px 0 8px}
+.score{font:700 15px var(--mono);padding:6px 12px;border-radius:10px;background:color-mix(in srgb,var(--dk) 18%,var(--panel));border:1px solid var(--dk);white-space:nowrap}
+.goal{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ok) 10%,var(--panel));border-left:4px solid var(--ok)}
+.suspects{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
+.sus{position:relative;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);overflow:hidden}
+.sus .who{font-weight:700}.sus .role{color:var(--muted);font-size:12.5px;margin-left:6px}
+.sus .say{font-style:italic;font-size:14px;margin-top:4px}
+.sus .stamp{position:absolute;right:8px;top:8px;transform:rotate(-12deg);font:800 15px var(--sans);letter-spacing:.08em;padding:2px 8px;border:3px solid;border-radius:6px}
+.sus .stamp.guilty{color:var(--swap);border-color:var(--swap);background:color-mix(in srgb,var(--swap) 10%,var(--panel))}
+.sus .stamp.clear{color:var(--ok);border-color:var(--ok);font-size:12px}
+.sus.is-guilty{border-color:var(--swap);box-shadow:0 0 0 2px color-mix(in srgb,var(--swap) 40%,transparent)}
+.story{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+.story .bubble{background:color-mix(in srgb,var(--pg) 8%,var(--panel));border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:9px 12px;font-size:15px}
+.story .bubble b.nm{display:block;font-size:13px;color:var(--muted);margin-bottom:2px}
+.task{font-size:15.5px;margin:6px 0 4px}.task .lab{display:inline-block;font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.expect{font-size:13.5px;color:var(--muted);margin:0 0 8px}.expect code{font-size:12.5px}
+.rankline{font-size:17px;margin-top:8px}
