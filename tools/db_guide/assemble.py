@@ -21,7 +21,8 @@ CHAPTERS = [
     ("arch", "5 · Архітектура проєкту", ["arch", "trace", "why", "methods"]),
     ("design", "6 · Проєктуємо свою базу", ["design", "survey", "builder"]),
     ("olap", "7 · Аналітика", ["olap"]),
-    ("road", "8 · Роадмап і задачі", ["road", "tasks"]),
+    ("detect", "8 · Розслідування", ["detect"]),
+    ("road", "9 · Роадмап і задачі", ["road", "tasks"]),
 ]
 args = sys.argv[1:]
 out = os.path.join(D, "..", "..", "module_3", "bonus", f"Бази даних — загальна картина.html")
@@ -42,6 +43,8 @@ if missing and "--allow-missing" not in args: sys.exit(f"sections missing: {miss
 head = read(os.path.join(SHARED, "base_head.html")).replace("<title>Алгоритми наживо — повний гайд</title>", f"<title>{TITLE}</title>")
 css = read(os.path.join(SHARED, "extra.css")) + "".join(read(os.path.join(D, f"frag_{n}.css")) for n in names)
 js = "".join(f"\n/* ---------- frag_{n} ---------- */\n" + read(os.path.join(D, f"frag_{n}.js")) for n in names)
+# дані справ «Розслідування» (генерує cases/build_cases.py)
+js = js.replace("/*CASES_JSON*/null", read(os.path.join(D, "cases", "cases.json")).replace("</", "<\\/"))
 html = f"""{head}
 <style>
 {css}</style>

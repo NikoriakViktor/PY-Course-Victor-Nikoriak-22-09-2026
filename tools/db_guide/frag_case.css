@@ -1,0 +1,20 @@
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:16px}
+.cases .cs{border:1px solid var(--line);border-top:4px solid var(--svc);border-radius:10px;background:var(--panel);padding:10px 12px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.cases .cs.pg{border-top-color:var(--pg)}.cases .cs.rd{border-top-color:var(--rd)}.cases .cs.dk{border-top-color:var(--dk)}
+.cases .cs[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.cases .cs b{display:block;font-size:16px;margin:2px 0}.cases .cs small{color:var(--muted);font-size:12.5px}
+.cases .cs .st{float:right;font-size:12.5px;color:var(--ok);font-weight:700}
+textarea.ed{width:100%;box-sizing:border-box;font:14px/1.5 var(--mono);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--codebg);color:var(--codefg);resize:vertical}
+.dots{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.dots span{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--muted);cursor:pointer;background:var(--panel)}
+.dots span.on{border-color:var(--ink);color:var(--ink)}.dots span.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.dots span.lock{opacity:.45;cursor:not-allowed}
+#detect-verdict .v{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:15px}
+#detect-verdict .v.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);border-left:4px solid var(--ok)}
+#detect-verdict .v.no{background:color-mix(in srgb,var(--swap) 12%,transparent);border-left:4px solid var(--swap)}
+#detect-out table{border-collapse:collapse;font:13px var(--mono);width:auto}
+#detect-out th,#detect-out td{border:1px solid var(--line);padding:3px 8px;text-align:left;white-space:nowrap}
+#detect-out th{background:color-mix(in srgb,var(--pg) 12%,var(--panel))}
+#detect-out pre{margin:0}
+.schema-t{margin-bottom:8px}.schema-t b{font-family:var(--mono);cursor:pointer;color:var(--pg)}.schema-t span{font-family:var(--mono);color:var(--muted)}
+.verdict-final{margin-top:12px;padding:14px 16px;border-radius:12px;border:2px solid var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--panel));font-size:15.5px}

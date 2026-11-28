@@ -1,0 +1,28 @@
+/* схеми кроків проєктування */
+svg.dsg{width:100%;height:auto;display:block}
+.dsg text{fill:var(--ink);font-family:var(--sans);font-size:14px}
+.dsg text.m{font-family:var(--mono);font-size:13px}
+.dsg text.t{font-weight:700;font-size:15.5px}
+.dsg text.s{fill:var(--muted);font-size:12.5px}
+.dsg text.hd{fill:#fff;font-family:var(--mono);font-weight:700;font-size:14.5px}
+.dsg text.ty{fill:var(--muted);font-family:var(--mono);font-size:12.5px}
+.dsg text.key{fill:var(--dk);font-family:var(--mono);font-weight:700;font-size:11.5px}
+.dsg text.fk{fill:var(--pg);font-family:var(--mono);font-weight:700;font-size:11.5px}
+.dsg text.rule{fill:var(--ok);font-family:var(--mono);font-size:12px;font-weight:600}
+.dsg text.card{fill:var(--rd);font-weight:800;font-size:15px}
+.dsg rect.pg{fill:color-mix(in srgb,var(--pg) 7%,var(--panel));stroke:var(--pg);stroke-width:2.5}
+.dsg rect.pgh{fill:var(--pg)}
+.dsg rect.rd{fill:color-mix(in srgb,var(--rd) 6%,var(--panel));stroke:var(--rd);stroke-width:2.5}
+.dsg rect.dk{fill:color-mix(in srgb,var(--dk) 9%,var(--panel));stroke:var(--dk);stroke-width:2.5}
+.dsg rect.svc{fill:var(--panel);stroke:var(--svc);stroke-width:2.5}
+.dsg rect.act{fill:color-mix(in srgb,var(--ok) 10%,var(--panel));stroke:var(--ok);stroke-width:2.5}
+.dsg rect.ghost{fill:var(--panel);stroke:var(--muted);stroke-width:2;stroke-dasharray:6 5}
+.dsg rect.row{fill:transparent}
+.dsg rect.rowfk{fill:color-mix(in srgb,var(--pg) 14%,transparent)}
+.dsg line.sep{stroke:var(--line);stroke-width:1}
+.dsg .ln{stroke:var(--muted);stroke-width:2.2;fill:none}
+.dsg .ln.pg{stroke:var(--pg);stroke-width:2.6}
+.dsg .ln.rd{stroke:var(--rd)}
+.dsg .ln.dash{stroke-dasharray:7 5}
+.dsg text.lbl{font-size:12.5px;font-weight:600;paint-order:stroke;stroke:var(--panel);stroke-width:6px;stroke-linejoin:round}
+.dsg .arh{fill:var(--muted)}.dsg .arh.pg{fill:var(--pg)}.dsg .arh.rd{fill:var(--rd)}

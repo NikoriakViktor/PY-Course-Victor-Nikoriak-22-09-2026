@@ -7,6 +7,7 @@ HTML самодостатній, його можна просто відкрит
 ## Збірка й перевірка
 
 ```bash
+python tools/db_guide/cases/build_cases.py             # дані справ «Розслідування» → cases.json
 python tools/db_guide/assemble.py                      # → module_3/bonus/Бази даних — загальна картина.html
 python tools/db_guide/browser_check.py                 # усі анімації, режими й кнопки в браузері, помилки JS
 python tools/db_guide/checks/check_sandbox.py          # пісочниця = справжній Redis (99 команд)
@@ -30,6 +31,7 @@ python tools/db_guide/checks/check_code.py             # Python-код з гай
 | `frag_pat.*` | патерни: кеш, лічильник і rate limit, три черги, захоплення кур'єра, MULTI/EXEC, відкладений повтор |
 | `frag_arch.*` | схема сервісів (`ARCH`, `archSvg`), замовлення наскрізь з логами, «чому так», шпаргалка |
 | `frag_design.*` | «Проєктуємо свою базу»: що таке кожне сховище, 7 кроків проєктування з місцями в коді, опитувальник, конструктор схеми |
+| `frag_case.*`, `cases/` | «Розслідування»: 4 справи (PostgreSQL ×2, Redis, DuckDB). Дані й питання генерує `cases/build_cases.py` → `cases/cases.json` (і перевіряє еталонні відповіді в SQLite); SQL виконується в браузері через sql.js (SQLite-WASM з CDN, потрібен інтернет), Redis — через `MiniRedis` |
 | `frag_olap.*`, `frag_road.*` | аналітика (рядки проти колонок), роадмап, задачі |
 
 Правило змісту: усе, що гайд каже про проєкт (ключі, функції, команди, рядки логів), має збігатися з кодом

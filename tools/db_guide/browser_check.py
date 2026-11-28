@@ -2,7 +2,7 @@
 
     python tools/db_guide/browser_check.py ["module_3/bonus/Бази даних — загальна картина.html"] [--shots DIR]
 
-Відкриває кожну секцію, проганяє кожну анімацію до кінця в кожному режимі (усі варіанти <select>),
+Відкриває кожну секцію, проганяє кожну анімацію до кінця в кожному режимі (усі варіанти <select>), розв'язує кожну справу «Розслідування» еталонними відповідями,
 клацає тренажер, пісочницю й схему. Друкує помилки JS. Свій Chromium — змінна CHROMIUM_PATH."""
 import os, pathlib, sys
 from playwright.sync_api import sync_playwright
@@ -36,6 +36,7 @@ with sync_playwright() as pw:
         if errs: print("load errors:", errs); bad += 1
         for sid in pg.eval_on_selector_all("section.lesson", "els => els.map(e => e.id)"):
             errs.clear(); pg.evaluate(f"showSection('{sid}', false)"); res = pg.evaluate(RUN, sid)
+            if sid == "detect": res += " " + pg.evaluate("window.__detectSelfTest()")
             if shots:
                 os.makedirs(shots, exist_ok=True); pg.screenshot(path=f"{shots}/{theme}_{sid}.png", full_page=True)
             bad += bool(errs); print(f"{sid:10s} {res:48s} {'ERR ' + '; '.join(errs) if errs else 'ok'}")
