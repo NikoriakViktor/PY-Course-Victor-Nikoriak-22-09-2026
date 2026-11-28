@@ -28,14 +28,16 @@
   <h2>Як спроєктувати базу даних: 7 кроків</h2>
   <p class="lead">Базу не починають з <code>CREATE TABLE</code>. Починають з <b>питань, на які система має відповідати</b>, і йдуть зверху вниз: сценарії → сутності → поля → зв'язки → таблиці → гарячі операції в Redis → аналітика. Пройди кроки на «Смачно + Таксі». На кожному показано, <b>що ми вирішили</b>, <b>де це в коді</b> і <b>чому саме там</b>.</p>
   <details class="predict"><summary>🔮 Прогноз: з чого почнеш проєктувати базу для служби доставки — з таблиць чи з питання «що користувачі й сервіси мають робити»?</summary><p>З питань. Таблиці — відповідь на них. Якщо почати з таблиць, з'являться колонки, які ніхто не читає, і не буде тих, без яких система не працює, наприклад «хто з кур'єрів вільний зараз».</p></details>
-  <div class="grid">
+  <div class="card">
+    <div class="controls" id="design-controls"></div>
+    <div class="flow" id="design-flow"></div>
+    <h3 id="design-h" style="font-size:19px;text-transform:none;letter-spacing:0;color:var(--ink);margin:12px 0 4px"></h3>
+    <p id="design-cap" style="margin:0 0 8px;color:var(--muted);font-size:14px"></p>
+    <svg class="dsg" id="design-svg" viewBox="0 0 1000 400" role="img" aria-label="Схема кроку проєктування"></svg>
+  </div>
+  <div class="grid" style="margin-top:20px">
     <div class="stack">
-      <div class="card">
-        <div class="controls" id="design-controls"></div>
-        <div class="flow" id="design-flow"></div>
-        <h3 id="design-h" style="font-size:18px;text-transform:none;letter-spacing:0;color:var(--ink);margin:10px 0 6px"></h3>
-        <div id="design-body" style="font-size:15px"></div>
-      </div>
+      <div class="card"><h3>Що ми вирішили</h3><div id="design-body" style="font-size:15px"></div></div>
       <div class="card"><h3>Чек-лист: база зрозуміла, якщо…</h3>
         <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:14.5px">
           <li>кожна таблиця — одна сутність, названа іменником у множині (<code>orders</code>), з первинним ключем <code>id</code>;</li>
@@ -48,7 +50,7 @@
         </ul></div>
     </div>
     <div class="stack">
-      <div class="card"><h3 id="design-code-h">Результат у коді</h3><pre class="code" id="design-code"></pre></div>
+      <div class="card"><h3>Результат у коді</h3><pre class="code" id="design-code"></pre></div>
     </div>
   </div>
   <div class="course" id="design-course"></div>
